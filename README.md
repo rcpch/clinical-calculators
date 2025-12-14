@@ -224,9 +224,10 @@ Each calculator has a name that identifies it in the CLI/API/package and has par
 ```text
 clinical-calculators/
 │
-├── calculators/                    # One file per calculator (e.g., bmi.py, ifcc_to_dcct.py)
+├── calculators/                    # One file per calculator (e.g., bmi.py, hba1c_converter.py)
+│   ├── __init__.py
 │   ├── bmi.py
-│   ├── ifcc_to_dcct.py
+│   ├── hba1c_converter.py
 │   └── ...
 │
 ├── core/                          # Shared logic
@@ -243,9 +244,34 @@ clinical-calculators/
 │   └── schemas/                 # Pydantic models (auto-generated from config)
 │
 ├── tests/                       # Unit & integration tests
-│   └── test_calculator.py
+│   ├── test_bmi.py
+│   ├── test_hba1c_converter.py
+│   └── ...
 │
-├── docs/                        # Auto-generated docs (from docstrings + config)
+├── site/                        # GitHub Pages web client
+│   ├── index.html              # Main calculator interface
+│   ├── docs.html               # Documentation viewer
+│   ├── app.js                  # Web client logic
+│   ├── config.js               # API configuration
+│   └── favicon.ico             # RCPCH logo
+│
+├── docs/                        # Documentation (markdown)
+│   ├── index.md                # Documentation menu
+│   ├── overview.md             # Project overview
+│   ├── development.md          # Development guide
+│   ├── api-reference.md        # API documentation
+│   ├── calculator-specs.md     # Calculator creation guide
+│   └── colors.md               # RCPCH brand colors
+│
+├── static/                      # Static assets for API
+│   └── favicon.ico
+│
+├── s/                          # Development scripts
+│   └── dev.sh                  # Docker helper script
+│
+├── .github/
+│   └── workflows/
+│       └── deploy-pages.yml    # GitHub Pages deployment
 │
 ├── pyproject.toml
 ├── setup.py
