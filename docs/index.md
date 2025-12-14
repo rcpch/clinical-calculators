@@ -14,6 +14,10 @@ Welcome to the RCPCH Clinical Calculators documentation.
 - [Calculator Specifications](calculator-specs.md) - How to create calculators
 - [API Reference](api-reference.md) - Complete API documentation
 
+## Maintenance
+
+- [Project Maintenance](maintenance.md) - Removing calculators, deprecation, versioning, and releases
+
 ## Resources
 
 - [RCPCH Brand Colors](colors.md) - Official RCPCH color palette
