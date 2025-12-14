@@ -1,15 +1,14 @@
 from __future__ import annotations
+
 import importlib
 import importlib.util
 import inspect
-import io
 import os
 import re
 import subprocess
 import sys
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
-
+from typing import Any
 
 _INSTALL_CACHE: set[str] = set()
 
@@ -23,7 +22,12 @@ class CalculatorSpec:
 class DependencyError(Exception):
     """Raised when calculator-declared dependencies cannot be installed."""
 
-    def __init__(self, missing: List[str], calculator: Optional[str] = None, detail: Optional[str] = None):
+    def __init__(
+        self,
+        missing: list[str],
+        calculator: str | None = None,
+        detail: str | None = None,
+    ):
         self.missing = missing
         self.calculator = calculator
         self.detail = detail
@@ -34,7 +38,7 @@ class DependencyError(Exception):
         super().__init__(msg)
 
 
-def _find_calculator_file(name: str) -> Optional[str]:
+def _find_calculator_file(name: str) -> str | None:
     """Return absolute path to the calculator module file without importing it."""
     spec = importlib.util.find_spec(f"calculators.{name}")
     if not spec or not spec.origin:
@@ -48,7 +52,7 @@ def _read_top_docstring(source_text: str) -> str:
     return m.group(2).strip() if m else ""
 
 
-def _parse_dependencies_from_doc(doc: str) -> List[str]:
+def _parse_dependencies_from_doc(doc: str) -> list[str]:
     """Parse a [dependencies] block from the docstring and return packages.
 
     Supported formats within the block (until next [section] or blank line boundary):
@@ -59,7 +63,7 @@ def _parse_dependencies_from_doc(doc: str) -> List[str]:
     if not doc:
         return []
     lines = doc.splitlines()
-    deps: List[str] = []
+    deps: list[str] = []
     in_block = False
     for raw in lines:
         line = raw.strip()
@@ -84,7 +88,7 @@ def _parse_dependencies_from_doc(doc: str) -> List[str]:
         deps.extend(parts)
     # Deduplicate while preserving order
     seen: set[str] = set()
-    result: List[str] = []
+    result: list[str] = []
     for d in deps:
         if d not in seen:
             seen.add(d)
@@ -92,7 +96,7 @@ def _parse_dependencies_from_doc(doc: str) -> List[str]:
     return result
 
 
-def parse_inputs_spec(doc: str) -> List[Dict[str, Any]]:
+def parse_inputs_spec(doc: str) -> list[dict[str, Any]]:
     """Parse an [inputs] section from the calculator docstring.
 
     Returns a list of field dicts with keys like: name, type, enum (list), required (bool),
@@ -103,9 +107,9 @@ def parse_inputs_spec(doc: str) -> List[Dict[str, Any]]:
     if not doc:
         return []
     lines = doc.splitlines()
-    inputs: List[Dict[str, Any]] = []
+    inputs: list[dict[str, Any]] = []
     in_inputs = False
-    current: Optional[Dict[str, Any]] = None
+    current: dict[str, Any] | None = None
 
     def flush_current():
         nonlocal current
@@ -121,7 +125,7 @@ def parse_inputs_spec(doc: str) -> List[Dict[str, Any]]:
         # enums like ["a", "b"] or [a, b]
         if v.startswith("[") and v.endswith("]"):
             inner = v[1:-1]
-            parts = [p.strip().strip('"\'') for p in inner.split(",")]
+            parts = [p.strip().strip("\"'") for p in inner.split(",")]
             return [p for p in parts if p]
         # numbers
         try:
@@ -139,7 +143,11 @@ def parse_inputs_spec(doc: str) -> List[Dict[str, Any]]:
                 in_inputs = True
             continue
         # Stop at next section header
-        if line.strip().startswith("[") and line.strip().endswith("]") and line.strip().lower() != "[inputs]":
+        if (
+            line.strip().startswith("[")
+            and line.strip().endswith("]")
+            and line.strip().lower() != "[inputs]"
+        ):
             flush_current()
             break
         if not line.strip():
@@ -161,7 +169,9 @@ def parse_inputs_spec(doc: str) -> List[Dict[str, Any]]:
     return inputs
 
 
-def _ensure_dependencies_installed(packages: List[str], calculator_name: Optional[str] = None) -> None:
+def _ensure_dependencies_installed(
+    packages: list[str], calculator_name: str | None = None
+) -> None:
     """Ensure the given packages are installed. Installs missing ones via pip.
 
     This performs a best-effort check using importlib.util.find_spec for top-level
@@ -170,7 +180,7 @@ def _ensure_dependencies_installed(packages: List[str], calculator_name: Optiona
     """
     if not packages:
         return
-    missing: List[str] = []
+    missing: list[str] = []
     for pkg in packages:
         if pkg in _INSTALL_CACHE:
             continue
@@ -195,14 +205,14 @@ def _ensure_dependencies_installed(packages: List[str], calculator_name: Optiona
         for pkg in missing:
             _INSTALL_CACHE.add(pkg)
     except subprocess.CalledProcessError as e:
-        raise DependencyError(missing, calculator=calculator_name, detail=str(e))
+        raise DependencyError(missing, calculator=calculator_name, detail=str(e)) from e
 
 
 def _read_doc_config_without_import(name: str) -> str:
     path = _find_calculator_file(name)
     if not path or not os.path.isfile(path):
         return ""
-    with io.open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         src = f.read()
     return _read_top_docstring(src)
 
@@ -231,7 +241,7 @@ def get_doc_config(module) -> str:
     return doc
 
 
-def get_calculator_spec(name: str) -> Optional[CalculatorSpec]:
+def get_calculator_spec(name: str) -> CalculatorSpec | None:
     # Read doc without importing to avoid dependency issues
     doc_pre = _read_doc_config_without_import(name)
     if not doc_pre:
@@ -244,15 +254,16 @@ def get_calculator_spec(name: str) -> Optional[CalculatorSpec]:
     return CalculatorSpec(name=name, doc_config=doc_pre)
 
 
-def available_calculators() -> Dict[str, str]:
+def available_calculators() -> dict[str, str]:
     """Return a mapping of calculator names to their titles from docstrings.
 
     This does not guarantee that calculators are valid, only that they exist.
     """
     import pkgutil
+
     import calculators
 
-    results: Dict[str, str] = {}
+    results: dict[str, str] = {}
     for m in pkgutil.iter_modules(calculators.__path__):  # type: ignore[attr-defined]
         name = m.name
         try:
@@ -263,6 +274,7 @@ def available_calculators() -> Dict[str, str]:
             title = name
         results[name] = title
     return results
+
 
 def parse_description(doc: str) -> str:
     """Parse a [description] section from the calculator docstring."""
@@ -277,7 +289,11 @@ def parse_description(doc: str) -> str:
                 in_desc = True
             continue
         # Stop at next section header
-        if line.strip().startswith("[") and line.strip().endswith("]") and line.strip().lower() != "[description]":
+        if (
+            line.strip().startswith("[")
+            and line.strip().endswith("]")
+            and line.strip().lower() != "[description]"
+        ):
             break
         desc_lines.append(line.strip())
-    return " ".join(l for l in desc_lines if l).strip()
+    return " ".join(line for line in desc_lines if line).strip()

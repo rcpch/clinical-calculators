@@ -1,29 +1,33 @@
 from __future__ import annotations
+
 import json
+from typing import Any
+
 import markdown as md
-from typing import Any, Dict
 
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
 from fastapi.openapi.docs import (
-    get_swagger_ui_html,
     get_redoc_html,
+    get_swagger_ui_html,
     get_swagger_ui_oauth2_redirect_html,
 )
+from fastapi.responses import HTMLResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # local imports
 from core.loader import (
-    available_calculators,
-    load_calculator_module,
     DependencyError,
+    available_calculators,
     get_calculator_spec,
+    load_calculator_module,
     parse_inputs_spec,
-    parse_description,
 )
+
 
 class ReverseProxyRootPathMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -34,6 +38,10 @@ class ReverseProxyRootPathMiddleware(BaseHTTPMiddleware):
         return response
 
 
+# Initialize rate limiter
+# Permissive limits as calculators are heavily used, but guards against attacks
+limiter = Limiter(key_func=get_remote_address)
+
 app = FastAPI(
     title="Clinical Calculators API",
     summary="Clinical calculators, standardised and reusable.",
@@ -43,6 +51,10 @@ app = FastAPI(
     openapi_url="/openapi.json",
     servers=[{"url": "/clinical-calculators"}],
 )
+
+# Add rate limiter to app state
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Add CORS middleware to allow frontend access
 app.add_middleware(
@@ -55,10 +67,12 @@ app.add_middleware(
 
 app.add_middleware(ReverseProxyRootPathMiddleware)
 
+
 @app.get("/favicon.ico", include_in_schema=False)
 async def favicon(request: Request):
     root_path = request.scope.get("root_path", "")
     return HTMLResponse(url=f"{root_path}/static/favicon.ico")
+
 
 # Prefix-aware Swagger UI
 @app.get("/docs", include_in_schema=False)
@@ -70,9 +84,11 @@ async def custom_swagger_ui_html(request: Request) -> HTMLResponse:
         oauth2_redirect_url=f"{root_path}/docs/oauth2-redirect",
     )
 
+
 @app.get("/docs/oauth2-redirect", include_in_schema=False)
 async def swagger_ui_redirect() -> HTMLResponse:
     return get_swagger_ui_oauth2_redirect_html()
+
 
 # Prefix-aware ReDoc
 @app.get("/redoc", include_in_schema=False)
@@ -138,7 +154,8 @@ def calculator_doc(name: str):
 
 
 @app.post("/calculate")
-def calculate(payload: Dict[str, Any]):
+@limiter.limit("100/minute")  # Permissive limit for heavy calculator usage
+def calculate(request: Request, payload: dict[str, Any]):
     name = payload.get("calculator")
     params = payload.get("params", {})
     if not name:
@@ -146,20 +163,24 @@ def calculate(payload: Dict[str, Any]):
 
     try:
         mod = load_calculator_module(name)
-    except ModuleNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Calculator '{name}' not found")
+    except ModuleNotFoundError as e:
+        raise HTTPException(
+            status_code=404, detail=f"Calculator '{name}' not found"
+        ) from e
     except DependencyError as de:
         # 424 Failed Dependency conveys installation issue
-        raise HTTPException(status_code=424, detail=str(de))
+        raise HTTPException(status_code=424, detail=str(de)) from de
 
     if not hasattr(mod, "calculate"):
-        raise HTTPException(status_code=500, detail=f"Calculator '{name}' missing calculate()")
+        raise HTTPException(
+            status_code=500, detail=f"Calculator '{name}' missing calculate()"
+        )
 
     try:
         resp = mod.calculate(params)  # type: ignore[attr-defined]
         return resp.dict() if hasattr(resp, "dict") else resp
     except Exception as e:  # validation errors surfaced as 400
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @app.get("/{name}/doc.html", response_class=HTMLResponse)
@@ -167,7 +188,6 @@ def calculator_doc_html(name: str, request: Request):  # UPDATED
     spec = get_calculator_spec(name)
     if not spec:
         raise HTTPException(status_code=404, detail=f"Calculator '{name}' not found")
-    desc = parse_description(spec.doc_config)
     body_md = spec.doc_config or f"# {name}\n\nNo documentation available."
     body_html = md.markdown(body_md, extensions=["fenced_code", "tables", "toc"])
     root_path = request.scope.get("root_path", "")
@@ -239,7 +259,8 @@ def calculator_form(name: str, request: Request):  # UPDATED
     if not spec:
         raise HTTPException(status_code=404, detail=f"Calculator '{name}' not found")
     fields = parse_inputs_spec(spec.doc_config)
-    def input_control(f: Dict[str, Any]) -> str:
+
+    def input_control(f: dict[str, Any]) -> str:
         label = f.get("description") or f.get("name")
         fname = f.get("name")
         ftype = (f.get("type") or "string").lower()
@@ -249,10 +270,15 @@ def calculator_form(name: str, request: Request):  # UPDATED
             opts = "".join(f"<option value='{opt}'>{opt}</option>" for opt in f["enum"])
             return f"<label>{label}: <select name='{fname}' {required}>{opts}</select></label>"
         input_type = "number" if ftype in {"number", "float", "int"} else "text"
-        min_attr = f" min='{f['min']}'" if isinstance(f.get("min"), (int, float)) else ""
-        max_attr = f" max='{f['max']}'" if isinstance(f.get("max"), (int, float)) else ""
+        min_attr = (
+            f" min='{f['min']}'" if isinstance(f.get("min"), (int, float)) else ""
+        )
+        max_attr = (
+            f" max='{f['max']}'" if isinstance(f.get("max"), (int, float)) else ""
+        )
         step_attr = " step='any'" if input_type == "number" else ""
         return f"<label>{label}: <input name='{fname}' type='{input_type}' placeholder='{placeholder}' {required}{min_attr}{max_attr}{step_attr}></label>"
+
     controls = "<br>\n".join(input_control(f) for f in fields)
     root_path = request.scope.get("root_path", "")
     html = f"""
@@ -281,14 +307,16 @@ async def calculator_submit(name: str, request: Request):
     try:
         ctype = request.headers.get("content-type", "")
         if "application/json" in ctype:
-            params: Dict[str, Any] = await request.json()
+            params: dict[str, Any] = await request.json()
         else:
             form = await request.form()
             params = {k: v for k, v in form.items()}
 
         spec = get_calculator_spec(name)
         if not spec:
-            return HTMLResponse(f"<pre>Calculator '{name}' not found</pre>", status_code=404)
+            return HTMLResponse(
+                f"<pre>Calculator '{name}' not found</pre>", status_code=404
+            )
 
         fields = parse_inputs_spec(spec.doc_config or "")
         numeric_names: set[str] = set()
@@ -305,12 +333,17 @@ async def calculator_submit(name: str, request: Request):
                 except Exception:
                     pass
     except Exception as e:
-        return HTMLResponse(f"<pre>Unexpected error while reading input: {str(e)}</pre>", status_code=500)
+        return HTMLResponse(
+            f"<pre>Unexpected error while reading input: {str(e)}</pre>",
+            status_code=500,
+        )
 
     try:
         mod = load_calculator_module(name)
     except ModuleNotFoundError:
-        return HTMLResponse(f"<pre>Calculator '{name}' not found</pre>", status_code=404)
+        return HTMLResponse(
+            f"<pre>Calculator '{name}' not found</pre>", status_code=404
+        )
     except DependencyError as de:
         return HTMLResponse(f"<pre>{str(de)}</pre>", status_code=424)
 

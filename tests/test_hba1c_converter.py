@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import math
-
-from calculators.hba1c_converter import HbA1cRequest, calculate
+from calculators.hba1c_converter import calculate
 
 
 def test_hba1c_percent_to_mmol_mol():
@@ -31,7 +29,7 @@ def test_hba1c_round_trip():
     # Start with 6.5% (diabetes threshold)
     resp1 = calculate({"value": 6.5, "input_unit": "percent"})
     mmol_mol_result = resp1.result
-    
+
     # Convert back to percentage
     resp2 = calculate({"value": mmol_mol_result, "input_unit": "mmol_mol"})
     assert abs(resp2.result - 6.5) < 0.1
@@ -53,7 +51,7 @@ def test_invalid_percentage_range():
     """Test that invalid percentage values are rejected."""
     try:
         calculate({"value": 25, "input_unit": "percent"})
-        assert False, "Should have raised ValueError"
+        raise AssertionError("Should have raised ValueError")
     except Exception as e:
         assert "percentage must be in" in str(e)
 
@@ -62,7 +60,7 @@ def test_invalid_mmol_mol_range():
     """Test that invalid mmol/mol values are rejected."""
     try:
         calculate({"value": 250, "input_unit": "mmol_mol"})
-        assert False, "Should have raised ValueError"
+        raise AssertionError("Should have raised ValueError")
     except Exception as e:
         assert "mmol/mol must be in" in str(e)
 

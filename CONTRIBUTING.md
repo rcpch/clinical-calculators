@@ -61,23 +61,45 @@ Before you start, make sure you have:
    - Write or update tests as needed
    - Update documentation if required
 
-3. **Run tests**
+3. **Run linting checks**
+   ```bash
+   ./s/lint
+   ```
+   
+   Or inside Docker:
+   ```bash
+   docker compose run --rm api ./s/lint
+   ```
+   
+   The linter runs three tools:
+   - **Black**: Code formatter (line length 88)
+   - **isort**: Import organizer
+   - **Ruff**: Fast Python linter
+   
+   To auto-fix most issues:
+   ```bash
+   docker compose run --rm api black calculators core cli api tests
+   docker compose run --rm api isort calculators core cli api tests
+   docker compose run --rm api ruff check --fix calculators core cli api tests
+   ```
+
+4. **Run tests**
    ```bash
    docker compose run --rm api pytest
    ```
 
-4. **Commit your changes**
+5. **Commit your changes**
    ```bash
    git add .
    git commit -m "Clear, concise commit message describing the change"
    ```
 
-5. **Push to your fork**
+6. **Push to your fork**
    ```bash
    git push origin feature/your-feature-name
    ```
 
-6. **Submit a Pull Request**
+7. **Submit a Pull Request**
    - Go to your fork on GitHub
    - Click "New Pull Request"
    - Select the `live` branch as the base branch

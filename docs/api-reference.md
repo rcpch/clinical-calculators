@@ -4,7 +4,7 @@ The RCPCH Clinical Calculators API provides a RESTful interface for accessing cl
 
 ## Base URL
 
-- **Production**: `https://api.rcpch.ac.uk/clinical-calculators`
+- **Production**: `https://api.rcpch.ac.uk/clinical-calculators/v1`
 - **Development**: `http://localhost:8000`
 
 ## Endpoints
@@ -138,12 +138,12 @@ Currently, there are no rate limits on the API, but this may change in productio
 import requests
 
 # List calculators
-response = requests.get('https://api.rcpch.ac.uk/clinical-calculators/list')
+response = requests.get('https://api.rcpch.ac.uk/clinical-calculators/v1/list')
 calculators = response.json()
 
 # Calculate BMI
 response = requests.post(
-    'https://api.rcpch.ac.uk/clinical-calculators/calculate',
+    'https://api.rcpch.ac.uk/clinical-calculators/v1/calculate',
     json={
         'calculator_name': 'bmi',
         'inputs': {
@@ -160,12 +160,12 @@ print(f"BMI: {result['bmi']}, Category: {result['category']}")
 
 ```javascript
 // List calculators
-const response = await fetch('https://api.rcpch.ac.uk/clinical-calculators/list');
+const response = await fetch('https://api.rcpch.ac.uk/clinical-calculators/v1/list');
 const data = await response.json();
 
 // Calculate HbA1c
 const result = await fetch(
-    'https://api.rcpch.ac.uk/clinical-calculators/calculate',
+    'https://api.rcpch.ac.uk/clinical-calculators/v1/calculate',
     {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -183,10 +183,10 @@ console.log(`${conversion.hba1c_percentage}% = ${conversion.hba1c_mmol_mol} mmol
 
 ```bash
 # List calculators
-curl https://api.rcpch.ac.uk/clinical-calculators/list
+curl https://api.rcpch.ac.uk/clinical-calculators/v1/list
 
 # Calculate BMI
-curl -X POST https://api.rcpch.ac.uk/clinical-calculators/calculate \
+curl -X POST https://api.rcpch.ac.uk/clinical-calculators/v1/calculate \
   -H "Content-Type: application/json" \
   -d '{"calculator_name":"bmi","inputs":{"height_m":1.75,"weight_kg":70}}'
 ```
