@@ -20,6 +20,7 @@ from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # local imports
+from core.generator import generate_calculator
 from core.loader import (
     DependencyError,
     available_calculators,
@@ -181,6 +182,71 @@ def calculate(request: Request, payload: dict[str, Any]):
         return resp.dict() if hasattr(resp, "dict") else resp
     except Exception as e:  # validation errors surfaced as 400
         raise HTTPException(status_code=400, detail=str(e)) from e
+
+
+@app.post("/generate-calculator")
+@limiter.limit("10/minute")  # Lower limit for resource-intensive generation
+def generate_calculator_endpoint(request: Request, payload: dict[str, Any]):
+    """
+    Generate calculator code from TOML/Markdown specification.
+    
+    Request body:
+    {
+        "spec": "TOML/Markdown specification string"
+    }
+    
+    Returns:
+    {
+        "success": true/false,
+        "name": "calculator_name",
+        "python_code": "generated calculator code",
+        "test_code": "generated test code",
+        "validation_errors": [...],
+        "message": "Success or error message"
+    }
+    """
+    spec_input = payload.get("spec")
+    
+    if not spec_input:
+        raise HTTPException(status_code=400, detail="Missing 'spec' in request body")
+    
+    # Generate calculator
+    result = generate_calculator(spec_input)
+    
+    # Format validation errors for response
+    errors = [
+        {
+            "field": e.field,
+            "message": e.message,
+            "severity": e.severity,
+        }
+        for e in result.validation_errors
+    ]
+    
+    # Determine response message
+    if not result.is_valid:
+        message = "Calculator generation failed. Please fix the errors and try again."
+        status_code = 400
+    elif errors:
+        message = "Calculator generated successfully with warnings."
+        status_code = 200
+    else:
+        message = "Calculator generated successfully!"
+        status_code = 200
+    
+    response = {
+        "success": result.is_valid,
+        "name": result.name,
+        "python_code": result.python_code,
+        "test_code": result.test_code,
+        "validation_errors": errors,
+        "message": message,
+    }
+    
+    if not result.is_valid:
+        raise HTTPException(status_code=status_code, detail=response)
+    
+    return response
 
 
 @app.get("/{name}/doc.html", response_class=HTMLResponse)
