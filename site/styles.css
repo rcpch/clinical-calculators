@@ -1,0 +1,63 @@
+/* DaisyUI Theme Override */
+[data-theme="light"] {
+  --p: 199 89% 51%;     /* primary: #11A7F2 */
+  --pc: 0 0% 100%;      /* primary-content: white */
+  --s: 215 59% 50%;     /* secondary: #3366CC */
+  --sc: 0 0% 100%;      /* secondary-content: white */
+  --a: 90 60% 50%;      /* accent: #66CC33 */
+  --ac: 0 0% 100%;      /* accent-content: white */
+  --n: 240 73% 20%;     /* neutral: #0D0D58 */
+  --nc: 0 0% 100%;      /* neutral-content: white */
+  --b1: 0 0% 100%;      /* base-100: white */
+  --b2: 0 0% 96%;       /* base-200: light gray */
+  --b3: 0 0% 92%;       /* base-300: gray */
+  --bc: 240 10% 20%;    /* base-content: dark gray text */
+}
+
+body {
+  background: white;
+  color: #333;
+}
+
+.card {
+  background-color: white;
+  color: #333;
+}
+
+.card-title {
+  color: #0D0D58;
+}
+
+.btn-primary {
+  background-color: #11A7F2 !important;
+  border-color: #11A7F2 !important;
+  color: white !important;
+}
+
+.btn-primary:hover {
+  background-color: #0D0D58 !important;
+  border-color: #0D0D58 !important;
+  color: white !important;
+}
+
+/* Documentation styles */
+#doc-content h1, #doc-content h2, #doc-content h3 {
+  color: var(--rcpch-dark-blue);
+  font-weight: bold;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+#doc-content pre {
+  background: #f3f4f6;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+#doc-content code {
+  background: #f3f4f6;
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
