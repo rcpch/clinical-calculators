@@ -17,13 +17,18 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN python -m pip install --upgrade pip
 
-# Install Python deps first to leverage cache
-COPY requirements.txt ./requirements.txt
-RUN pip install -r requirements.txt
+# Copy project files for dependency installation
+COPY pyproject.toml setup.py ./
+COPY calculators ./calculators
+COPY core ./core
+COPY cli ./cli
+COPY api ./api
 
-# Copy project and install package
-COPY . .
+# Install package with dependencies
 RUN pip install -e .
+
+# Copy rest of project (tests, docs, etc.)
+COPY . .
 
 EXPOSE 8000
 

@@ -3,11 +3,12 @@ set -euo pipefail
 
 # Dev helper for Dockerized workflow
 # Usage:
-#   s/dev.sh up        # build and start with reload
-#   s/dev.sh down      # stop and remove containers
-#   s/dev.sh logs      # tail logs
-#   s/dev.sh rebuild   # rebuild image and restart
-#   s/dev.sh sh        # open a shell in the running api container
+#   s/dev up        # build and start with reload
+#   s/dev down      # stop and remove containers
+#   s/dev logs      # tail logs
+#   s/dev rebuild   # rebuild image and restart
+#   s/dev sh        # open a shell in the running api container
+#   s/lint          # run code quality checks (black, isort, ruff)
 
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 repo_root="$(cd "$here/.." && pwd)"

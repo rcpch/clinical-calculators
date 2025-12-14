@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import math
-
-from calculators.bmi import BMIRequest, calculate
+from calculators.bmi import calculate
 
 
 def test_bmi_metric_normal():

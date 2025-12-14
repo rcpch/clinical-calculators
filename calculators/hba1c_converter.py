@@ -61,7 +61,7 @@
 
 ## 📂 Usage (CLI or API)
 
-CLI: 
+CLI:
   calc hba1c_converter --value 7.5 --input-unit percent
 
 API:
@@ -113,7 +113,7 @@ class HbA1cRequest(BaseModel):
     def validate_ranges(cls, values):
         unit = values.get("input_unit")
         val = values.get("value")
-        
+
         if unit == "percent":
             if val is not None and not (0 < val <= 20):
                 raise ValueError("HbA1c percentage must be in (0, 20]")
@@ -122,7 +122,7 @@ class HbA1cRequest(BaseModel):
                 raise ValueError("HbA1c mmol/mol must be in (0, 200]")
         else:
             raise ValueError("input_unit must be one of: percent, mmol_mol")
-        
+
         return values
 
 
@@ -155,28 +155,32 @@ def calculate(params: HbA1cRequest | dict) -> HbA1cResponse:
     """Convert HbA1c between percentage and mmol/mol.
 
     Accepts either a HbA1cRequest or a plain dict (which will be validated).
-    
+
     Conversion formulas:
     - % to mmol/mol: (% - 2.15) × 10.929
     - mmol/mol to %: (mmol/mol / 10.929) + 2.15
     """
     req = params if isinstance(params, HbA1cRequest) else HbA1cRequest(**params)
-    
+
     if req.input_unit == "percent":
         # Convert from percentage to mmol/mol
         result = round((req.value - 2.15) * 10.929, 1)
         result_unit = "mmol/mol"
-        working = f"HbA1c {req.value}% → ({req.value} - 2.15) × 10.929 = {result} mmol/mol"
+        working = (
+            f"HbA1c {req.value}% → ({req.value} - 2.15) × 10.929 = {result} mmol/mol"
+        )
         mmol_mol_for_interp = result
     else:
         # Convert from mmol/mol to percentage
         result = round((req.value / 10.929) + 2.15, 1)
         result_unit = "percent"
-        working = f"HbA1c {req.value} mmol/mol → ({req.value} / 10.929) + 2.15 = {result}%"
+        working = (
+            f"HbA1c {req.value} mmol/mol → ({req.value} / 10.929) + 2.15 = {result}%"
+        )
         mmol_mol_for_interp = req.value
-    
+
     interpretation = _interpret_hba1c(mmol_mol_for_interp)
-    
+
     return HbA1cResponse(
         result=result,
         result_unit=result_unit,
