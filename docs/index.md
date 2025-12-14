@@ -5,18 +5,18 @@ Welcome to the RCPCH Clinical Calculators documentation.
 ## Getting Started
 
 - [Project Overview](overview.md) - Introduction to the Clinical Calculators API
-- [Development Guide](development.md) - How to develop and contribute
-- [RCPCH Brand Colors](colors.md) - Official RCPCH color palette
+- [Setup and Usage](setup.md) - How to run the API, CLI, web interface, and use as a Python package
 
-## API Documentation
+## Development
 
-- [API Reference](api-reference.md) - Complete API documentation
+- [Development Guide](development.md) - How to develop locally
+- [Contributing Guide](../CONTRIBUTING.md) - How to contribute to the project
 - [Calculator Specifications](calculator-specs.md) - How to create calculators
+- [API Reference](api-reference.md) - Complete API documentation
 
-## Deployment
+## Resources
 
-- [GitHub Pages Setup](github-pages.md) - Deploying the web interface
-- [Production Deployment](production.md) - Deploying the API to production
+- [RCPCH Brand Colors](colors.md) - Official RCPCH color palette
 
 ## Resources
 

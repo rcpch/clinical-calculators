@@ -7,7 +7,23 @@ This guide explains how to create new calculators for the RCPCH Clinical Calcula
 Each calculator is a Python module that:
 1. Defines input and output data models using Pydantic
 2. Implements a `calculate()` function with the calculation logic
-3. Provides documentation in a structured format
+3. Provides documentation in a structured TOML format
+
+## Validation
+
+Validation is compatible with FastAPI and uses FastAPI request and response classes for easy integration with APIs. These validation classes are specific to each calculator and defined in the same file.
+
+## Instantiation
+
+Whichever way the calculator is accessed (API/pip install or CLI), the requests and responses follow the same pattern - all inputs are validated against the structure provided in the TOML using the FastAPI Response and Request classes defined in the calculator file. There is a `cli` folder, an `api` folder and a `main.py`.
+
+## Templates
+
+The project includes templates with form templates for each field in basic Jinja that can be used with whichever framework you choose.
+
+## Usage Pattern
+
+Calling each function should involve only a single function call, with the parameters as defined in the docstring of the relevant calculator file. The response similarly should follow the same structure as defined in the TOML coupled with the metadata which are generic to all requests.
 
 ## File Structure
 
