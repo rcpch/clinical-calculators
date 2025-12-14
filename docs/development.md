@@ -29,6 +29,17 @@ This will start the API server at `http://localhost:8000`
 docker compose run --rm api pytest
 ```
 
+For verbose output:
+```bash
+docker compose run --rm api pytest -v
+```
+
+To run specific tests:
+```bash
+docker compose run --rm api pytest tests/test_bmi.py
+docker compose run --rm api pytest tests/test_bmi.py::test_basic_bmi_calculation
+```
+
 ### View API Documentation
 
 Visit `http://localhost:8000/docs` for interactive API documentation.
@@ -188,6 +199,112 @@ def calculate(params: dict) -> CalculationResponse:
 ```
 
 See [Calculator Specifications](calculator-specs.md) for complete details.
+
+## Testing
+
+### Testing Philosophy
+
+All calculators should have comprehensive tests covering:
+
+1. **Normal cases**: Test typical valid inputs and expected outputs
+2. **Edge cases**: Test boundary values (min/max, zero, negative where applicable)
+3. **Validation**: Test that invalid inputs are properly rejected
+4. **Clinical accuracy**: Verify results against known reference values
+5. **Error handling**: Test error messages are clear and helpful
+
+### Writing Tests
+
+Create a test file in `tests/` matching your calculator name (e.g., `test_my_calculator.py`):
+
+```python
+from __future__ import annotations
+
+from calculators.my_calculator import calculate
+
+
+def test_basic_calculation():
+    """Test basic functionality with valid inputs."""
+    result = calculate({"param1": 10, "param2": 20})
+    assert result.result == 30
+    assert result.interpretation is not None
+
+
+def test_edge_case_minimum():
+    """Test minimum boundary value."""
+    result = calculate({"param1": 0, "param2": 1})
+    assert result.result == 1
+
+
+def test_edge_case_maximum():
+    """Test maximum boundary value."""
+    result = calculate({"param1": 100, "param2": 100})
+    assert result.result == 200
+
+
+def test_invalid_input():
+    """Test that invalid input raises appropriate error."""
+    try:
+        calculate({"param1": -1, "param2": 20})
+        raise AssertionError("Should have raised ValueError")
+    except Exception as e:
+        assert "must be" in str(e).lower()
+
+
+def test_response_structure():
+    """Test that response has all required fields."""
+    result = calculate({"param1": 10, "param2": 20})
+    assert hasattr(result, "result")
+    assert hasattr(result, "working")
+    assert hasattr(result, "interpretation")
+    assert hasattr(result, "metadata")
+    assert hasattr(result, "reference")
+
+
+def test_metadata_presence():
+    """Test that metadata includes required fields."""
+    result = calculate({"param1": 10, "param2": 20})
+    assert "timestamp" in result.metadata
+    assert "version" in result.metadata
+    assert "calculator_name" in result.metadata
+```
+
+### Running Tests
+
+```bash
+# Run all tests
+docker compose run --rm api pytest
+
+# Run with verbose output
+docker compose run --rm api pytest -v
+
+# Run specific test file
+docker compose run --rm api pytest tests/test_my_calculator.py
+
+# Run specific test function
+docker compose run --rm api pytest tests/test_my_calculator.py::test_basic_calculation
+
+# Run with coverage report
+docker compose run --rm api pytest --cov=calculators --cov-report=term-missing
+
+# Run tests matching a pattern
+docker compose run --rm api pytest -k "bmi or hba1c"
+```
+
+### Test Coverage
+
+Aim for high test coverage, especially for:
+- All calculation logic
+- Input validation
+- Edge cases and boundary conditions
+- Error handling
+
+### Continuous Integration
+
+Tests run automatically on:
+- Pull requests to the `live` branch
+- Pushes to the `live` branch
+
+The CI workflow also runs linting checks (black, isort, ruff) to ensure code quality.
 
 ## Development Scripts
 

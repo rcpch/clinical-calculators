@@ -76,6 +76,23 @@ Example result:
 
 Visit <http://localhost:8000/docs> for Swagger UI documentation where you can try out the API endpoints interactively.
 
+### Rate Limiting
+
+The API includes rate limiting to prevent abuse and ensure fair usage:
+
+- **Limit**: 100 requests per minute per IP address
+- **Endpoint**: `/calculate` endpoint is rate-limited
+- **Response**: When limit is exceeded, you'll receive a `429 Too Many Requests` response
+
+Example rate limit response:
+```json
+{
+  "detail": "Rate limit exceeded: 100 per 1 minute"
+}
+```
+
+The rate limiting is permissive enough for normal usage but provides protection against automated attacks or excessive requests. If you need higher limits for legitimate use cases, please contact the maintainers.
+
 ## Using as a Python Package
 
 Install the package in your Python project:
