@@ -64,17 +64,17 @@
                 
                 <div class="form-control">
                   <label class="label">
-                    <span class="label-text font-semibold">Calculator Name <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">lowercase_with_underscores</span>
+                    <span class="label-text font-semibold">Description <span class="text-error">*</span></span>
                   </label>
-                  <input type="text" id="calcName" class="input input-bordered" placeholder="e.g., bmi_calculator" required />
+                  <input type="text" id="calcDescription" class="input input-bordered" placeholder="Brief description of what this calculates" onkeyup="document.getElementById('calcName').value = generateVariableName(this.value)" required />
                 </div>
 
                 <div class="form-control">
                   <label class="label">
-                    <span class="label-text font-semibold">Description <span class="text-error">*</span></span>
+                    <span class="label-text font-semibold">Calculator Name <span class="text-error">*</span></span>
+                    <span class="label-text-alt text-xs">Auto-generated from description</span>
                   </label>
-                  <input type="text" id="calcDescription" class="input input-bordered" placeholder="Brief description of what this calculates" required />
+                  <input type="text" id="calcName" class="input input-bordered bg-base-200" placeholder="e.g., bmi_calculator" readonly required />
                 </div>
 
                 <div class="form-control">
@@ -106,17 +106,64 @@
 
               <div class="divider"></div>
 
+              <!-- Constants (Optional) -->
+              <div class="space-y-3">
+                <h3 class="font-semibold text-lg">Constants (Optional)</h3>
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Python Constants</span>
+                    <span class="label-text-alt text-xs">Define any constants needed</span>
+                  </label>
+                  <textarea id="calcConstants" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="GRAVITY = 9.81&#10;CONVERSION_FACTOR = 2.54"></textarea>
+                  <label class="label">
+                    <span class="label-text-alt text-xs">One constant per line, e.g., NAME = value</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
               <!-- Calculation Logic -->
               <div class="space-y-3">
                 <h3 class="font-semibold text-lg">Calculation Logic</h3>
+                
+                <div class="alert alert-info text-xs py-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <div id="availableVariables">
+                    <em class="text-gray-500">Add input parameters to see available variables</em>
+                  </div>
+                </div>
+
                 <div class="form-control">
                   <label class="label">
-                    <span class="label-text font-semibold">Python Code <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">Use request.{input_name} to access values</span>
+                    <span class="label-text font-semibold">Result <span class="text-error">*</span></span>
+                    <span class="label-text-alt text-xs">Main calculation result</span>
                   </label>
-                  <textarea id="calcLogic" class="textarea textarea-bordered h-32 font-mono text-sm" placeholder="result = request.weight / (request.height ** 2); working = f'BMI = {request.weight} / ({request.height}²)'; interpretation = f'BMI is {result:.1f}'" required></textarea>
+                  <textarea id="calcResult" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="weight / (height ** 2)" required></textarea>
                   <label class="label">
-                    <span class="label-text-alt text-xs">Must define: result, working, interpretation</span>
+                    <span class="label-text-alt text-xs">Python expression that calculates the result</span>
+                  </label>
+                </div>
+
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Working <span class="text-error">*</span></span>
+                    <span class="label-text-alt text-xs">Show your calculation steps</span>
+                  </label>
+                  <textarea id="calcWorking" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI = weight / height² = [result]" required></textarea>
+                  <label class="label">
+                    <span class="label-text-alt text-xs">Use variable names and [result] placeholder. Example: BMI = weight / height² = [result]</span>
+                  </label>
+                </div>
+
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Interpretation <span class="text-error">*</span></span>
+                    <span class="label-text-alt text-xs">Clinical meaning of the result</span>
+                  </label>
+                  <textarea id="calcInterpretation" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI is [result] kg/m²" required></textarea>
+                  <label class="label">
+                    <span class="label-text-alt text-xs">Plain text with [result] placeholder. Example: BMI is [result] kg/m²</span>
                   </label>
                 </div>
               </div>
@@ -159,8 +206,8 @@
                 <h4 class="font-semibold mb-2">Logic Variables</h4>
                 <div class="space-y-2 text-xs">
                   <div>
-                    <code class="bg-base-200 px-1 rounded">request.{name}</code>
-                    <div class="text-gray-600 ml-2 mt-1">Access input values</div>
+                    <code class="bg-base-200 px-1 rounded">{variable_name}</code>
+                    <div class="text-gray-600 ml-2 mt-1">Use input variable names directly</div>
                   </div>
                   <div>
                     <code class="bg-base-200 px-1 rounded">result</code>
@@ -181,9 +228,9 @@
 
               <div>
                 <h4 class="font-semibold mb-2">Example Logic</h4>
-                <pre class="bg-base-200 p-2 rounded text-xs overflow-x-auto"><code>result = request.weight / (request.height ** 2)
-working = f'BMI = {request.weight} / ({request.height}²) = {result:.2f}'
-interpretation = f'BMI is {result:.1f}'</code></pre>
+                <pre class="bg-base-200 p-2 rounded text-xs overflow-x-auto"><code>Result: weight / (height ** 2)
+Working: BMI = weight / height² = [result]
+Interpretation: BMI is [result] kg/m²</code></pre>
               </div>
             </div>
           </div>
@@ -325,6 +372,33 @@ interpretation = f'BMI is {result:.1f}'</code></pre>
 
       let inputCounter = 0;
 
+      window.generateVariableName = function(displayName) {
+        return displayName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '')
+          .replace(/_+/g, '_');
+      }
+
+      window.updateVariablesDisplay = function() {
+        const inputDivs = document.querySelectorAll('#inputsList > div');
+        const variables = [];
+        
+        inputDivs.forEach(div => {
+          const varName = div.querySelector('[name="inputVarName"]').value.trim();
+          if (varName) {
+            variables.push(varName);
+          }
+        });
+
+        const displayEl = document.getElementById('availableVariables');
+        if (variables.length > 0) {
+          displayEl.innerHTML = '<strong>Available:</strong> ' + variables.map(v => `<code class="bg-base-200 px-1 rounded text-xs">${v}</code>`).join(', ');
+        } else {
+          displayEl.innerHTML = '<em class="text-gray-500">Add input parameters to see available variables</em>';
+        }
+      }
+
       window.addInput = function() {
         const inputsList = document.getElementById('inputsList');
         const inputId = `input_${inputCounter++}`;
@@ -344,9 +418,17 @@ interpretation = f'BMI is {result:.1f}'</code></pre>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div class="form-control">
               <label class="label py-1">
-                <span class="label-text text-xs">Name <span class="text-error">*</span></span>
+                <span class="label-text text-xs">Display Name <span class="text-error">*</span></span>
               </label>
-              <input type="text" class="input input-sm input-bordered" name="inputName" placeholder="e.g., weight" required />
+              <input type="text" class="input input-sm input-bordered" name="inputDisplayName" placeholder="e.g., Weight in Kilograms" required 
+                onkeyup="const varInput = this.closest('.card').querySelector('[name=\\'inputVarName\\']'); varInput.value = generateVariableName(this.value); updateVariablesDisplay();" />
+            </div>
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text text-xs">Variable Name <span class="text-error">*</span></span>
+              </label>
+              <input type="text" class="input input-sm input-bordered font-mono" name="inputVarName" placeholder="weight_in_kilograms" required 
+                onkeyup="updateVariablesDisplay();" />
             </div>
             <div class="form-control">
               <label class="label py-1">
@@ -359,23 +441,17 @@ interpretation = f'BMI is {result:.1f}'</code></pre>
                 <option value="date">date</option>
               </select>
             </div>
-            <div class="form-control md:col-span-2">
-              <label class="label py-1">
-                <span class="label-text text-xs">Description <span class="text-error">*</span></span>
-              </label>
-              <input type="text" class="input input-sm input-bordered" name="inputDescription" placeholder="Describe this input" required />
-            </div>
             <div class="form-control">
               <label class="label py-1">
                 <span class="label-text text-xs">Unit</span>
               </label>
               <input type="text" class="input input-sm input-bordered" name="inputUnit" placeholder="e.g., kg, cm" />
             </div>
-            <div class="form-control">
+            <div class="form-control md:col-span-2">
               <label class="label py-1">
-                <span class="label-text text-xs">Required</span>
+                <span class="label-text text-xs">Description <span class="text-error">*</span></span>
               </label>
-              <input type="checkbox" class="checkbox checkbox-primary" name="inputRequired" checked />
+              <textarea class="textarea textarea-sm textarea-bordered" name="inputDescription" placeholder="Describe this input parameter" rows="2" required></textarea>
             </div>
             <div class="form-control">
               <label class="label py-1">
@@ -389,21 +465,32 @@ interpretation = f'BMI is {result:.1f}'</code></pre>
               </label>
               <input type="number" class="input input-sm input-bordered" name="inputMax" placeholder="100" />
             </div>
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text text-xs">Required</span>
+              </label>
+              <input type="checkbox" class="checkbox checkbox-primary" name="inputRequired" checked />
+            </div>
           </div>
         `;
         
         inputsList.appendChild(inputDiv);
+        updateVariablesDisplay();
       };
 
       window.removeInput = function(inputId) {
         document.getElementById(inputId).remove();
+        updateVariablesDisplay();
       };
 
       window.loadExample = function() {
-        document.getElementById('calcName').value = 'bmi_simple';
         document.getElementById('calcDescription').value = 'Calculate Body Mass Index from height and weight';
+        document.getElementById('calcName').value = 'calculate_body_mass_index_from_height_and_weight';
         document.getElementById('calcReference').value = 'WHO BMI Guidelines';
-        document.getElementById('calcLogic').value = "result = request.weight / (request.height ** 2); working = f'BMI = {request.weight} / ({request.height}²) = {result:.2f}'; interpretation = f'BMI is {result:.2f}'";
+        document.getElementById('calcConstants').value = '';
+        document.getElementById('calcResult').value = "weight / (height ** 2)";
+        document.getElementById('calcWorking').value = "BMI = weight / height² = [result]";
+        document.getElementById('calcInterpretation').value = "BMI is [result] kg/m²";
         
         // Clear existing inputs
         document.getElementById('inputsList').innerHTML = '';
@@ -413,7 +500,8 @@ interpretation = f'BMI is {result:.1f}'</code></pre>
         addInput();
         const inputs = document.querySelectorAll('#inputsList > div');
         const weightInput = inputs[0];
-        weightInput.querySelector('[name="inputName"]').value = 'weight';
+        weightInput.querySelector('[name="inputDisplayName"]').value = 'Weight';
+        weightInput.querySelector('[name="inputVarName"]').value = 'weight';
         weightInput.querySelector('[name="inputType"]').value = 'number';
         weightInput.querySelector('[name="inputDescription"]').value = 'Weight in kilograms';
         weightInput.querySelector('[name="inputUnit"]').value = 'kg';
@@ -421,13 +509,16 @@ interpretation = f'BMI is {result:.1f}'</code></pre>
         weightInput.querySelector('[name="inputMax"]').value = '500';
         
         addInput();
-        const heightInput = inputs[1] || document.querySelectorAll('#inputsList > div')[1];
-        heightInput.querySelector('[name="inputName"]').value = 'height';
+        const heightInput = document.querySelectorAll('#inputsList > div')[1];
+        heightInput.querySelector('[name="inputDisplayName"]').value = 'Height';
+        heightInput.querySelector('[name="inputVarName"]').value = 'height';
         heightInput.querySelector('[name="inputType"]').value = 'number';
         heightInput.querySelector('[name="inputDescription"]').value = 'Height in meters';
         heightInput.querySelector('[name="inputUnit"]').value = 'm';
         heightInput.querySelector('[name="inputMin"]').value = '0.5';
         heightInput.querySelector('[name="inputMax"]').value = '3.0';
+        
+        updateVariablesDisplay();
       };
 
       window.clearForm = function() {
@@ -448,25 +539,35 @@ interpretation = f'BMI is {result:.1f}'</code></pre>
         const name = document.getElementById('calcName').value.trim();
         const description = document.getElementById('calcDescription').value.trim();
         const reference = document.getElementById('calcReference').value.trim();
-        const logic = document.getElementById('calcLogic').value.trim();
+        const constants = document.getElementById('calcConstants').value.trim();
+        const result = document.getElementById('calcResult').value.trim();
+        const working = document.getElementById('calcWorking').value.trim();
+        const interpretation = document.getElementById('calcInterpretation').value.trim();
         
-        if (!name || !description || !reference || !logic) {
+        if (!name || !description || !reference || !result || !working || !interpretation) {
           alert('Please fill in all required calculator fields');
           return null;
         }
 
-        // Replace newlines with semicolons and clean up multiple semicolons
-        const cleanLogic = logic
-          .replace(/\n+/g, '; ')
-          .replace(/;\s*;+/g, '; ')
-          .replace(/;\s*$/, '')
-          .trim();
+        // Convert working and interpretation to f-strings
+        const workingFString = `f'${working.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`;
+        const interpretationFString = `f'${interpretation.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`;
+        
+        // Build logic from constants and the three parts
+        let logic = '';
+        if (constants) {
+          const constantLines = constants.split('\n').filter(line => line.trim());
+          logic += constantLines.join('; ') + '; ';
+        }
+        logic += `result = ${result}; `;
+        logic += `working = ${workingFString}; `;
+        logic += `interpretation = ${interpretationFString}`;
 
         let toml = `[calculator]\n`;
         toml += `name = "${name}"\n`;
         toml += `description = "${description}"\n`;
         toml += `reference = "${reference}"\n`;
-        toml += `logic = "${cleanLogic.replace(/"/g, '\\"')}"\n\n`;
+        toml += `logic = "${logic.replace(/"/g, '\\"')}"\n\n`;
 
         const inputDivs = document.querySelectorAll('#inputsList > div');
         if (inputDivs.length === 0) {
@@ -475,7 +576,7 @@ interpretation = f'BMI is {result:.1f}'</code></pre>
         }
 
         inputDivs.forEach(div => {
-          const name = div.querySelector('[name="inputName"]').value.trim();
+          const varName = div.querySelector('[name="inputVarName"]').value.trim();
           const type = div.querySelector('[name="inputType"]').value;
           const description = div.querySelector('[name="inputDescription"]').value.trim();
           const unit = div.querySelector('[name="inputUnit"]').value.trim();
@@ -483,13 +584,13 @@ interpretation = f'BMI is {result:.1f}'</code></pre>
           const min = div.querySelector('[name="inputMin"]').value.trim();
           const max = div.querySelector('[name="inputMax"]').value.trim();
 
-          if (!name || !description) {
-            alert('Please fill in name and description for all inputs');
+          if (!varName || !description) {
+            alert('Please fill in variable name and description for all inputs');
             return null;
           }
 
           toml += `[[inputs]]\n`;
-          toml += `name = "${name}"\n`;
+          toml += `name = "${varName}"\n`;
           toml += `type = "${type}"\n`;
           toml += `description = "${description}"\n`;
           toml += `required = ${required}\n`;
