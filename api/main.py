@@ -6,6 +6,7 @@ from typing import Any, Dict
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
+from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from fastapi.openapi.docs import (
@@ -42,6 +43,16 @@ app = FastAPI(
     openapi_url="/openapi.json",
     servers=[{"url": "/clinical-calculators"}],
 )
+
+# Add CORS middleware to allow frontend access
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify actual domains
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.add_middleware(ReverseProxyRootPathMiddleware)
 
 @app.get("/favicon.ico", include_in_schema=False)

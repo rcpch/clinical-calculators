@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RCPCH Clinical Calculators</title>
+  <link rel="icon" type="image/x-icon" href="./favicon.ico">
+  
+  <!-- DaisyUI 5 + Tailwind CSS 4 -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  
+  <style>
+    /* DaisyUI Theme Override */
+    [data-theme="light"] {
+      --p: 199 89% 51%;     /* primary: #11A7F2 */
+      --pc: 0 0% 100%;      /* primary-content: white */
+      --s: 215 59% 50%;     /* secondary: #3366CC */
+      --sc: 0 0% 100%;      /* secondary-content: white */
+      --a: 90 60% 50%;      /* accent: #66CC33 */
+      --ac: 0 0% 100%;      /* accent-content: white */
+      --n: 240 73% 20%;     /* neutral: #0D0D58 */
+      --nc: 0 0% 100%;      /* neutral-content: white */
+      --b1: 0 0% 100%;      /* base-100: white */
+      --b2: 0 0% 96%;       /* base-200: light gray */
+      --b3: 0 0% 92%;       /* base-300: gray */
+      --bc: 240 10% 20%;    /* base-content: dark gray text */
+    }
+    
+    body {
+      background: white;
+      color: #333;
+    }
+    
+    .card {
+      background-color: white;
+      color: #333;
+    }
+    
+    .card-title {
+      color: #0D0D58;
+    }
+    
+    .btn-primary {
+      background-color: #11A7F2;
+      border-color: #11A7F2;
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background-color: #0D0D58;
+      border-color: #0D0D58;
+      color: white;
+    }
+    
+    #doc-content h1, #doc-content h2, #doc-content h3 {
+      color: var(--rcpch-dark-blue);
+      font-weight: bold;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    #doc-content pre {
+      background: #f3f4f6;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+    }
+    
+    #doc-content code {
+      background: #f3f4f6;
+      padding: 0.125rem 0.25rem;
+      border-radius: 0.25rem;
+      font-size: 0.875em;
+    }
+  </style>
+</head>
+<body data-theme="rcpch">
+  
+  <!-- Header -->
+  <div class="navbar bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm py-4">
+    <div class="container mx-auto">
+      <button class="btn btn-ghost normal-case text-xl font-bold text-rcpch-dark-blue flex items-center gap-2" onclick="showHome()">
+        <img src="./favicon.ico" alt="RCPCH Logo" class="w-8 h-8 flex-shrink-0">
+        <span>RCPCH Clinical Calculators</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Page Header -->
+  <div class="bg-white border-b border-gray-200">
+    <div class="container mx-auto px-4 py-6">
+      <div class="text-center">
+        <h1 class="text-4xl font-bold text-rcpch-dark-blue mb-2">Clinical Calculators</h1>
+        <p class="text-gray-600">
+          Evidence-based calculators for healthcare professionals
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="container mx-auto px-4 py-8">
+    
+    <!-- Home View -->
+    <div id="home-view">
+      <!-- Calculator List Section -->
+      <section class="mb-12">
+        <div class="text-center mb-8">
+          <h2 class="text-2xl font-bold text-rcpch-dark-blue mb-2">Available Calculators</h2>
+          <p class="text-gray-600">Select a calculator to get started (<span id="calculator-count">-</span> available)</p>
+        </div>
+        
+        <div id="calculator-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Calculators will be loaded here -->
+          <div class="col-span-full flex justify-center p-8">
+            <span class="loading loading-spinner loading-lg text-primary"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Form Section (Initially Hidden) -->
+      <section id="form-container" class="max-w-3xl mx-auto">
+        <!-- Form will be rendered here -->
+      </section>
+    </div>
+
+    <!-- Documentation View (Initially Hidden) -->
+    <div id="doc-view" class="hidden">
+      <div class="max-w-4xl mx-auto">
+        <div class="flex justify-center p-8">
+          <span class="loading loading-spinner loading-lg text-primary"></span>
+        </div>
+        <div id="doc-content" class="prose max-w-none">
+          <!-- Documentation will be rendered here -->
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer p-10 bg-white border-t border-gray-200 text-gray-700">
+    <div class="container mx-auto">
+      <div class="flex flex-wrap items-center gap-6">
+        <div>
+          <p>Royal College of Paediatrics and Child Health</p>
+          <p class="text-sm">Copyright © 2025 - All rights reserved</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-4">
+          <a href="https://www.rcpch.ac.uk" target="_blank" class="link link-hover">About RCPCH</a>
+          <button onclick="showDocumentation()" class="link link-hover flex items-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+            </svg>
+            Documentation
+          </button>
+          <a href="https://github.com/rcpch/clinical-calculators" target="_blank" class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+            </svg>
+            GitHub
+          </a>
+          <a href="https://github.com/rcpch/clinical-calculators/issues" target="_blank" class="link link-hover">Report an Issue</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Container for Errors -->
+  <div id="toast-container" class="toast toast-top toast-end z-50"></div>
+
+  <!-- JavaScript -->
+  <script type="module" src="./app.js"></script>
+
+</body>
+</html>
