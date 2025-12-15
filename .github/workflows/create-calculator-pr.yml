@@ -69,11 +69,15 @@ jobs:
 
       - name: Write calculator file
         run: |
-          echo "${{ inputs.calculator_code }}" > calculators/${{ inputs.calculator_name }}.py
+          cat > calculators/${{ inputs.calculator_name }}.py << 'EOFCALC'
+          ${{ inputs.calculator_code }}
+          EOFCALC
 
       - name: Write test file
         run: |
-          echo "${{ inputs.test_code }}" > tests/test_${{ inputs.calculator_name }}.py
+          cat > tests/test_${{ inputs.calculator_name }}.py << 'EOFTEST'
+          ${{ inputs.test_code }}
+          EOFTEST
 
       - name: Run tests
         id: test
