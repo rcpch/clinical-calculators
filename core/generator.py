@@ -259,7 +259,7 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
 
         # Build field definition - use multiline if it would be too long
         single_line = f"    {field_name}: {field_type} = Field({', '.join(field_args)})"
-        
+
         if len(single_line) > 88:
             # Break into multiple lines
             request_class.append(f"    {field_name}: {field_type} = Field(")
