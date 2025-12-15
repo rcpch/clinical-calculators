@@ -180,6 +180,68 @@ Check your Ollama service is accessible:
 curl ${OLLAMA_BASE_URL}/api/tags
 ```
 
+## Local Testing
+
+Before submitting a calculator via PR, you can test it locally using the `s/test-generator` script. This validates that the generated code passes all checks (Black, isort, Ruff, pytest).
+
+### Usage
+
+1. Create a TOML specification file:
+```toml
+[calculator]
+name = "my_calculator"
+description = "My Calculator"
+reference = "Reference citation"
+logic = "result = input1 + input2"
+
+[[inputs]]
+name = "input1"
+type = "number"
+description = "First input"
+required = true
+min = 0
+max = 100
+```
+
+2. Run the test script:
+```bash
+./s/test-generator my_calculator.toml
+```
+
+3. The script will:
+   - Generate calculator and test code
+   - Run Black formatter
+   - Run isort import sorter
+   - Run Ruff linter
+   - Run pytest
+   - Report any issues
+
+4. If all checks pass, you'll see:
+```
+✅ All checks passed!
+
+Files created:
+  - calculators/my_calculator.py
+  - tests/test_my_calculator.py
+
+To clean up test files, run:
+  rm calculators/my_calculator.py tests/test_my_calculator.py
+```
+
+### Note on Long Descriptions
+
+Black formatter allows long string literals in function arguments. If you see very long description strings in `Field()` definitions, this is intentional and compliant with Black's formatting rules. The code will pass all checks.
+
+Example of correct formatting:
+```python
+my_field: float = Field(
+    ...,
+    ge=0,
+    le=100,
+    description="This is a very long description that exceeds 88 characters but is allowed by Black when inside function arguments",
+)
+```
+
 ### GitHub CLI Not Authenticated
 
 Run:

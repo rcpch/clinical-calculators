@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+# Test script for validating generated calculator code
+# Usage: ./s/test-generator <toml_spec_file>
+
+set -e
+
+if [ -z "$1" ]; then
+  echo "Usage: ./s/test-generator <toml_spec_file>"
+  echo "Example: ./s/test-generator /tmp/my_calculator.toml"
+  exit 1
+fi
+
+SPEC_FILE="$1"
+
+if [ ! -f "$SPEC_FILE" ]; then
+  echo "Error: Spec file '$SPEC_FILE' not found"
+  exit 1
+fi
+
+echo "🔍 Testing calculator generation from: $SPEC_FILE"
+echo ""
+
+# Read spec file
+SPEC=$(cat "$SPEC_FILE")
+
+# Generate calculator using Docker
+echo "📝 Generating calculator code..."
+CALC_NAME=$(docker-compose run --rm api python << PYTHON
+from core.generator import generate_calculator
+import sys
+
+spec = """$SPEC"""
+
+try:
+    result = generate_calculator(spec)
+    
+    if not result.is_valid:
+        print("❌ Generation failed:", file=sys.stderr)
+        for error in result.validation_errors:
+            print(f"  - {error.field}: {error.message}", file=sys.stderr)
+        sys.exit(1)
+    
+    # Write files
+    calc_file = f"calculators/{result.name}.py"
+    test_file = f"tests/test_{result.name}.py"
+    
+    with open(calc_file, 'w') as f:
+        f.write(result.python_code)
+    
+    with open(test_file, 'w') as f:
+        f.write(result.test_code)
+    
+    print(f"✅ Generated:", file=sys.stderr)
+    print(f"   - {calc_file}", file=sys.stderr)
+    print(f"   - {test_file}", file=sys.stderr)
+    print("", file=sys.stderr)
+    
+    # Print name to stdout for capture
+    print(result.name)
+        
+except Exception as e:
+    print(f"❌ Error: {e}", file=sys.stderr)
+    sys.exit(1)
+PYTHON
+)
+
+echo "🎨 Running Black formatter..."
+docker-compose run --rm api black calculators/${CALC_NAME}.py tests/test_${CALC_NAME}.py
+
+echo ""
+echo "✨ Running isort..."
+docker-compose run --rm api isort calculators/${CALC_NAME}.py tests/test_${CALC_NAME}.py
+
+echo ""
+echo "🔍 Running Ruff linter..."
+docker-compose run --rm api ruff check calculators/${CALC_NAME}.py tests/test_${CALC_NAME}.py
+
+echo ""
+echo "🧪 Running tests..."
+docker-compose run --rm api pytest tests/test_${CALC_NAME}.py -v
+
+echo ""
+echo "✅ All checks passed!"
+echo ""
+echo "Files created:"
+echo "  - calculators/${CALC_NAME}.py"
+echo "  - tests/test_${CALC_NAME}.py"
+echo ""
+echo "To clean up test files, run:"
+echo "  rm calculators/${CALC_NAME}.py tests/test_${CALC_NAME}.py"
