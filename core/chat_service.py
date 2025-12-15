@@ -180,6 +180,90 @@ class ChatService:
                 "toml_spec": None,
                 "error": str(e),
             }
+    
+    async def chat_stream(
+        self, message: str, history: list[dict[str, str]] | None = None
+    ):
+        """Stream chat responses token by token."""
+        
+        if history is None:
+            history = []
+
+        # Validate input
+        if len(message) > 1000:
+            yield {"error": "Message too long. Keep it under 1000 characters."}
+            return
+
+        if not self._is_calculator_related(message):
+            yield {"error": "I can only help with calculator specification creation. Please ask about creating a calculator."}
+            return
+
+        # Limit conversation length
+        if len(history) > 30:
+            yield {"error": "Conversation limit reached. Please start a new conversation."}
+            return
+
+        # Build messages for API
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            *history,
+            {"role": "user", "content": message},
+        ]
+
+        # Call Ollama with streaming
+        try:
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                headers = {}
+                if self.api_key:
+                    headers["Ocp-Apim-Subscription-Key"] = self.api_key
+
+                async with client.stream(
+                    "POST",
+                    f"{self.ollama_url}/v1/chat/completions",
+                    json={
+                        "model": self.model,
+                        "messages": messages,
+                        "stream": True,
+                        "temperature": 0.7,
+                    },
+                    headers=headers,
+                ) as response:
+                    if response.status_code != 200:
+                        yield {"error": f"Error calling LLM: {response.status_code}"}
+                        return
+
+                    full_response = ""
+                    async for line in response.aiter_lines():
+                        if not line.strip():
+                            continue
+                        
+                        if line.startswith("data: "):
+                            try:
+                                chunk_data = json.loads(line[6:])
+                                if "choices" in chunk_data and chunk_data["choices"]:
+                                    delta = chunk_data["choices"][0].get("delta", {})
+                                    if "content" in delta:
+                                        token = delta["content"]
+                                        full_response += token
+                                        yield {"token": token}
+                            except json.JSONDecodeError:
+                                continue
+
+                    # Check if TOML spec is present in full response
+                    toml_spec = None
+                    if "[calculator]" in full_response:
+                        start = full_response.find("[calculator]")
+                        end = full_response.rfind("]") + 1
+                        if start >= 0 and end > start:
+                            toml_spec = full_response[start:end]
+
+                    yield {"done": True, "toml_spec": toml_spec}
+
+        except Exception as e:
+            import traceback
+            error_details = traceback.format_exc()
+            print(f"\n❌ Chat Stream Error:\n{error_details}\n")
+            yield {"error": str(e)}
 
     def _is_calculator_related(self, message: str) -> bool:
         """Simple check if message is about calculators."""

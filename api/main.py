@@ -7,6 +7,7 @@ import markdown as md
 
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import (
     get_redoc_html,
@@ -579,4 +580,45 @@ async def chat_calculator(request: Request, data: dict[str, Any]):
         raise HTTPException(
             status_code=500,
             detail=f"Chat error: {str(e)}",
+        ) from e
+    
+
+@app.post("/chat/calculator/stream")
+@limiter.limit("10/minute")
+async def chat_calculator_stream(request: Request, data: dict[str, Any]):
+    """
+    Streaming chat endpoint for guided calculator creation.
+    
+    Returns Server-Sent Events (SSE) format responses.
+    
+    Request body:
+        {
+            "message": str,
+            "history": [{"role": "user"|"assistant", "content": str}]
+        }
+    
+    Response: Stream of JSON objects
+        {"token": str}  # Individual tokens
+        {"done": true, "toml_spec": str | null}  # Completion marker
+    """
+    try:
+        message = data.get("message", "").strip()
+        history = data.get("history", [])
+
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
+
+        if not isinstance(history, list):
+            raise HTTPException(status_code=400, detail="History must be a list")
+
+        async def generate():
+            async for chunk in chat_service.chat_stream(message, history):
+                yield f"data: {json.dumps(chunk)}\n\n"
+
+        return StreamingResponse(generate(), media_type="text/event-stream")
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat stream error: {str(e)}",
         ) from e

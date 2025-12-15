@@ -996,7 +996,6 @@ window.sendChatMessage = async function() {
 
   console.log("Sending chat message:", message);
 
-  // Add user message to UI
   const chatMessages = document.getElementById("chatMessages");
   
   // Add user message bubble
@@ -1011,26 +1010,23 @@ window.sendChatMessage = async function() {
   input.value = "";
   chatMessages.scrollTop = chatMessages.scrollHeight;
 
-  // Show loading state
-  const loadingBubble = document.createElement("div");
-  loadingBubble.className = "chat chat-start mb-2";
-  loadingBubble.innerHTML = `
-    <div class="chat-bubble chat-bubble-primary">
-      <span class="loading loading-dots loading-sm"></span>
-      <span class="text-xs ml-2">(This may take 30+ seconds on first load...)</span>
-    </div>
-  `;
-  chatMessages.appendChild(loadingBubble);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  // Create assistant bubble for streaming response
+  const assistantBubble = document.createElement("div");
+  assistantBubble.className = "chat chat-start mb-2";
+  const responseDiv = document.createElement("div");
+  responseDiv.className = "chat-bubble chat-bubble-secondary";
+  assistantBubble.appendChild(responseDiv);
+  chatMessages.appendChild(assistantBubble);
+
+  let fullResponse = "";
 
   try {
-    console.log("Fetching from:", `${API_CONFIG.baseUrl}/chat/calculator`);
+    console.log("Fetching from:", `${API_CONFIG.baseUrl}/chat/calculator/stream`);
     
-    // Increase timeout to 90 seconds to allow Ollama model loading time
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 90000);
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout for streaming
 
-    const response = await fetch(`${API_CONFIG.baseUrl}/chat/calculator`, {
+    const response = await fetch(`${API_CONFIG.baseUrl}/chat/calculator/stream`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -1043,50 +1039,68 @@ window.sendChatMessage = async function() {
     });
 
     clearTimeout(timeoutId);
-    console.log("Response status:", response.status);
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(`API error: ${response.status} - ${errorData.detail || response.statusText}`);
     }
 
-    const data = await response.json();
-    console.log("Response data:", data);
+    // Handle streaming response
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let tomlSpec = null;
 
-    // Remove loading bubble
-    if (chatMessages.contains(loadingBubble)) {
-      chatMessages.removeChild(loadingBubble);
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      buffer = lines[lines.length - 1];
+
+      for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith("data: ")) {
+          try {
+            const chunk = JSON.parse(line.slice(6));
+            
+            if (chunk.token) {
+              // Add token to response
+              fullResponse += chunk.token;
+              responseDiv.innerHTML = parseMarkdown(fullResponse);
+              chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            if (chunk.done) {
+              tomlSpec = chunk.toml_spec;
+            }
+            
+            if (chunk.error) {
+              throw new Error(chunk.error);
+            }
+          } catch (e) {
+            console.error("Error parsing chunk:", e);
+          }
+        }
+      }
     }
 
-    // Add assistant response
-    const assistantBubble = document.createElement("div");
-    assistantBubble.className = "chat chat-start mb-2";
-    assistantBubble.innerHTML = `
-  <div class="chat-bubble chat-bubble-secondary">
-    ${parseMarkdown(data.response || data.message || "No response")}
-  </div>
-`;
-    chatMessages.appendChild(assistantBubble);
-    
     // Store in history
     if (typeof window.chatHistory === 'undefined') {
       window.chatHistory = [];
     }
     window.chatHistory.push({ role: "user", content: message });
-    window.chatHistory.push({ role: "assistant", content: data.response || data.message });
+    window.chatHistory.push({ role: "assistant", content: fullResponse });
 
     chatMessages.scrollTop = chatMessages.scrollHeight;
+
   } catch (error) {
     console.error("Chat error:", error);
     
-    // Remove loading bubble if still there
-    if (chatMessages.contains(loadingBubble)) {
-      chatMessages.removeChild(loadingBubble);
-    }
-    
     let errorMessage = error.message;
     if (error.name === 'AbortError') {
-      errorMessage = 'Request timeout - Ollama may be unavailable or the model is taking too long to load';
+      errorMessage = 'Request timeout - stream took too long';
     }
     
     const errorBubble = document.createElement("div");
