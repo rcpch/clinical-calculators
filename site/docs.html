@@ -205,9 +205,13 @@
     const docsIndex = [
       { title: 'Overview', file: 'index.md', id: 'index' },
       { title: 'Project Overview', file: 'overview.md', id: 'overview' },
+      { title: 'Setup and Usage', file: 'setup.md', id: 'setup' },
       { title: 'Development Guide', file: 'development.md', id: 'development' },
       { title: 'API Reference', file: 'api-reference.md', id: 'api-reference' },
       { title: 'Calculator Specifications', file: 'calculator-specs.md', id: 'calculator-specs' },
+      { title: 'Calculator Generator', file: 'calculator-generator.md', id: 'calculator-generator' },
+      { title: 'PR Automation Workflow', file: 'pr-automation-workflow.md', id: 'pr-automation-workflow' },
+      { title: 'Maintenance', file: 'maintenance.md', id: 'maintenance' },
       { title: 'RCPCH Brand Colors', file: 'colors.md', id: 'colors' },
     ];
 
@@ -247,7 +251,7 @@
       content.innerHTML = '<div class="flex justify-center p-8"><span class="loading loading-spinner loading-lg text-primary"></span></div>';
 
       try {
-        const response = await fetch(`../docs/${doc.file}`);
+        const response = await fetch(`./docs/${doc.file}`);
         if (!response.ok) throw new Error('Failed to load documentation');
         
         const markdown = await response.text();

@@ -1,1 +1,5 @@
 .env
+
+# Site docs are generated from /docs during deployment
+site/docs/
+
