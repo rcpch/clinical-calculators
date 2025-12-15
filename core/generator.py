@@ -14,6 +14,34 @@ from pathlib import Path
 from typing import Any
 
 
+def _format_with_black(code: str) -> str:
+    """Format Python code using Black."""
+    try:
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+            f.write(code)
+            temp_path = f.name
+        
+        # Run Black on the temp file
+        result = subprocess.run(
+            ['black', '--quiet', temp_path],
+            capture_output=True,
+            text=True,
+            timeout=5
+        )
+        
+        # Read the formatted code
+        with open(temp_path, 'r') as f:
+            formatted_code = f.read()
+        
+        # Clean up
+        Path(temp_path).unlink()
+        
+        return formatted_code if result.returncode == 0 else code
+    except Exception:
+        # If Black fails, return original code
+        return code
+
+
 @dataclass
 class ValidationError:
     """Represents a validation error with context."""
@@ -236,6 +264,7 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
     request_class = [
         f"class {class_name}(CalculatorRequest):",
         '    """Request model for calculator."""',
+        "",  # Blank line after docstring per Black
     ]
 
     for inp in inputs:
@@ -310,15 +339,15 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
         ]
     )
 
-    # Combine all parts
-    code_parts = [
-        "\n".join(imports),
-        docstring,
-        "\n".join(request_class),
-        "\n".join(calculate_func),
-    ]
+    # Combine all parts with proper spacing per PEP 8
+    # Note: "\n".join() does NOT add trailing newline, so sections end with content
+    imports_section = "\n".join(imports)
+    class_section = "\n".join(request_class)
+    function_section = "\n".join(calculate_func)
 
-    return "\n\n".join(code_parts) + "\n"
+    # Two blank lines = 3 newline characters (\n\n\n)
+    # Between: imports-docstring, docstring-class, class-function
+    return f"{imports_section}\n\n\n{docstring}\n\n\n{class_section}\n\n\n{function_section}\n"
 
 
 def _python_type_from_spec(type_str: str) -> str:
@@ -507,6 +536,10 @@ def generate_calculator(spec_input: str) -> GeneratedCalculator:
         # Generate code
         python_code = generate_calculator_code(spec)
         test_code = generate_test_code(spec)
+
+        # Format with Black
+        python_code = _format_with_black(python_code)
+        test_code = _format_with_black(test_code)
 
         # Validate generated code
         code_errors = validate_generated_code(python_code, test_code, name)
