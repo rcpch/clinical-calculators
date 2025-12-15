@@ -26,6 +26,7 @@ dependencies = [
   "python-multipart>=0.0.20",
   "slowapi>=0.1.9",
   "tomli>=2.0.0; python_version < '3.11'",
+  "httpx>=0.24.0",
 ]
 
 [project.optional-dependencies]
