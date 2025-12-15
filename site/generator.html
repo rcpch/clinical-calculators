@@ -849,25 +849,34 @@ Interpretation: BMI is [result] kg/m²</code></pre>
             body: JSON.stringify(generatedData),
           });
 
-          const data = await response.json();
+          // Try to parse as JSON, but handle non-JSON responses
+          let data;
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            data = await response.json();
+          } else {
+            const text = await response.text();
+            data = { detail: `Server returned non-JSON response (${response.status}): ${text.substring(0, 200)}` };
+          }
 
           if (response.ok) {
             alert(
               `✅ Success!\n\n` +
               `Branch: ${data.branch}\n` +
-              `PR: ${data.pr_url}\n\n` +
-              `Test Results:\n${data.test_results}`
+              `Workflow Status: ${data.workflow_status}\n\n` +
+              `The pull request will appear shortly at: ${data.pr_url}`
             );
             
-            // Open PR in new tab
+            // Open PR list in new tab
             if (data.pr_url) {
               window.open(data.pr_url, '_blank');
             }
           } else {
-            alert(`Error: ${data.detail}`);
+            const errorDetail = data.detail || 'Unknown error occurred';
+            alert(`❌ Error submitting calculator:\n\n${errorDetail}`);
           }
         } catch (error) {
-          alert(`Network error: ${error.message}`);
+          alert(`❌ Network error: ${error.message}\n\nPlease check your connection and try again.`);
         } finally {
           btn.disabled = false;
           btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Submit PR';

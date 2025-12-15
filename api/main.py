@@ -511,12 +511,16 @@ async def submit_calculator(
         }
 
     except PRSubmissionError as e:
+        error_msg = str(e)
+        print(f"PR Submission Error: {error_msg}")  # Log for debugging
         raise HTTPException(
             status_code=500,
-            detail=str(e),
+            detail=error_msg,
         ) from e
     except Exception as e:
+        error_msg = f"Failed to submit calculator: {str(e)}"
+        print(f"Unexpected Error: {error_msg}")  # Log for debugging
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to submit calculator: {str(e)}",
+            detail=error_msg,
         ) from e
