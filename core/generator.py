@@ -257,8 +257,20 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
         if field_desc:
             field_args.append(f'description="{field_desc}"')
 
-        field_def = f"    {field_name}: {field_type} = Field({', '.join(field_args)})"
-        request_class.append(field_def)
+        # Build field definition - use multiline if it would be too long
+        single_line = f"    {field_name}: {field_type} = Field({', '.join(field_args)})"
+        
+        if len(single_line) > 88:
+            # Break into multiple lines
+            request_class.append(f"    {field_name}: {field_type} = Field(")
+            for i, arg in enumerate(field_args):
+                if i < len(field_args) - 1:
+                    request_class.append(f"        {arg},")
+                else:
+                    request_class.append(f"        {arg}")
+            request_class.append("    )")
+        else:
+            request_class.append(single_line)
 
     # Build calculate function
     calculate_func = [
