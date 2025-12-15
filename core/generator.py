@@ -37,13 +37,13 @@ class GeneratedCalculator:
 def parse_toml_spec(spec: str) -> dict[str, Any]:
     """
     Parse TOML specification from docstring format.
-    
+
     Args:
         spec: TOML specification string (can include markdown)
-    
+
     Returns:
         Parsed specification dictionary
-    
+
     Raises:
         ValueError: If TOML is invalid or required sections missing
     """
@@ -54,15 +54,15 @@ def parse_toml_spec(spec: str) -> dict[str, Any]:
 
     # Extract TOML sections from markdown if present
     toml_content = _extract_toml_from_markdown(spec)
-    
+
     try:
         parsed = tomli.loads(toml_content)
     except Exception as e:
-        raise ValueError(f"Invalid TOML format: {e}")
-    
+        raise ValueError(f"Invalid TOML format: {e}") from e
+
     # Validate required sections
     _validate_required_sections(parsed)
-    
+
     return parsed
 
 
@@ -71,38 +71,40 @@ def _extract_toml_from_markdown(content: str) -> str:
     lines = content.strip().split("\n")
     toml_lines = []
     in_section = False
-    
+
     for line in lines:
         stripped = line.strip()
         # Check for TOML section headers
         if stripped.startswith("[") and stripped.endswith("]"):
             in_section = True
             toml_lines.append(line)
-        elif in_section and (stripped.startswith("-") or "=" in stripped or stripped == ""):
+        elif in_section and (
+            stripped.startswith("-") or "=" in stripped or stripped == ""
+        ):
             toml_lines.append(line)
         elif stripped.startswith("#") or stripped == "":
             # Keep comments and blank lines
             if in_section:
                 toml_lines.append(line)
-    
+
     return "\n".join(toml_lines)
 
 
 def _validate_required_sections(spec: dict[str, Any]) -> None:
     """Validate that required TOML sections are present."""
     required_sections = ["calculator", "inputs"]
-    
+
     for section in required_sections:
         if section not in spec:
             raise ValueError(f"Missing required section: [{section}]")
-    
+
     # Validate calculator metadata
     calc = spec["calculator"]
     required_fields = ["name", "description"]
     for field in required_fields:
         if field not in calc:
             raise ValueError(f"Missing required field in [calculator]: {field}")
-    
+
     # Validate at least one input
     if not spec["inputs"]:
         raise ValueError("At least one input is required in [inputs] section")
@@ -111,67 +113,77 @@ def _validate_required_sections(spec: dict[str, Any]) -> None:
 def validate_calculator_spec(spec: dict[str, Any]) -> list[ValidationError]:
     """
     Validate calculator specification and return any errors/warnings.
-    
+
     Args:
         spec: Parsed TOML specification
-    
+
     Returns:
         List of validation errors (empty if valid)
     """
     errors = []
-    
+
     # Validate calculator name
     name = spec.get("calculator", {}).get("name", "")
     if not re.match(r"^[a-z][a-z0-9_]*$", name):
-        errors.append(ValidationError(
-            field="calculator.name",
-            message="Name must start with lowercase letter and contain only lowercase letters, numbers, and underscores",
-            severity="error"
-        ))
-    
+        errors.append(
+            ValidationError(
+                field="calculator.name",
+                message="Name must start with lowercase letter and contain only lowercase letters, numbers, and underscores",
+                severity="error",
+            )
+        )
+
     # Validate inputs
     inputs = spec.get("inputs", [])
     for i, inp in enumerate(inputs):
         if "name" not in inp:
-            errors.append(ValidationError(
-                field=f"inputs[{i}]",
-                message="Input missing 'name' field",
-                severity="error"
-            ))
+            errors.append(
+                ValidationError(
+                    field=f"inputs[{i}]",
+                    message="Input missing 'name' field",
+                    severity="error",
+                )
+            )
         if "type" not in inp:
-            errors.append(ValidationError(
-                field=f"inputs[{i}]",
-                message="Input missing 'type' field",
-                severity="error"
-            ))
-        
+            errors.append(
+                ValidationError(
+                    field=f"inputs[{i}]",
+                    message="Input missing 'type' field",
+                    severity="error",
+                )
+            )
+
         # Validate input name format
         if "name" in inp and not re.match(r"^[a-z][a-z0-9_]*$", inp["name"]):
-            errors.append(ValidationError(
-                field=f"inputs[{i}].name",
-                message="Input name must start with lowercase letter and contain only lowercase letters, numbers, and underscores",
-                severity="error"
-            ))
-    
+            errors.append(
+                ValidationError(
+                    field=f"inputs[{i}].name",
+                    message="Input name must start with lowercase letter and contain only lowercase letters, numbers, and underscores",
+                    severity="error",
+                )
+            )
+
     # Validate calculation logic if provided
     calc_logic = spec.get("calculator", {}).get("logic", "")
     if not calc_logic:
-        errors.append(ValidationError(
-            field="calculator.logic",
-            message="No calculation logic provided",
-            severity="error"
-        ))
-    
+        errors.append(
+            ValidationError(
+                field="calculator.logic",
+                message="No calculation logic provided",
+                severity="error",
+            )
+        )
+
     return errors
 
 
 def generate_calculator_code(spec: dict[str, Any]) -> str:
     """
     Generate Python calculator code from specification.
-    
+
     Args:
         spec: Validated TOML specification
-    
+
     Returns:
         Generated Python code as string
     """
@@ -181,7 +193,7 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
     inputs = spec["inputs"]
     logic = calc.get("logic", "")
     reference = calc.get("reference", "")
-    
+
     # Build imports
     imports = [
         "from __future__ import annotations",
@@ -192,17 +204,17 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
         "from core.request.request import CalculatorRequest",
         "from core.response.response import CalculationResponse",
     ]
-    
+
     # Build docstring
     docstring = f'"""\n# {name.replace("_", " ").title()}\n\n{description}\n'
-    
+
     # Add TOML spec to docstring
     docstring += "\n## 📂 Configuration\n\n[calculator]\n"
     docstring += f'name = "{name}"\n'
     docstring += f'description = "{description}"\n'
     if reference:
         docstring += f'reference = "{reference}"\n'
-    
+
     docstring += "\n[inputs]\n"
     for inp in inputs:
         docstring += f'- name: {inp["name"]}\n'
@@ -216,75 +228,77 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
         if "max" in inp:
             docstring += f'  max: {inp["max"]}\n'
         docstring += "\n"
-    
+
     docstring += '"""\n'
-    
+
     # Build Request class
     class_name = "".join(word.capitalize() for word in name.split("_")) + "Request"
     request_class = [
         f"class {class_name}(CalculatorRequest):",
         '    """Request model for calculator."""',
     ]
-    
+
     for inp in inputs:
         field_name = inp["name"]
         field_type = _python_type_from_spec(inp["type"])
         field_desc = inp.get("description", "")
-        
+
         # Build Field with validation
         field_args = []
         if inp.get("required", True):
             field_args.append("...")
         else:
             field_args.append("None")
-        
+
         if "min" in inp:
             field_args.append(f'ge={inp["min"]}')
         if "max" in inp:
             field_args.append(f'le={inp["max"]}')
         if field_desc:
             field_args.append(f'description="{field_desc}"')
-        
+
         field_def = f"    {field_name}: {field_type} = Field({', '.join(field_args)})"
         request_class.append(field_def)
-    
+
     # Build calculate function
     calculate_func = [
         "",
         "",
-        f"def calculate(params: dict) -> CalculationResponse:",
+        "def calculate(params: dict) -> CalculationResponse:",
         f'    """Calculate {name.replace("_", " ")}."""',
         f"    request = {class_name}(**params)",
         "",
         "    # Extract input values",
     ]
-    
+
     # Extract variables from request for direct use in logic
     for inp in inputs:
         field_name = inp["name"]
         calculate_func.append(f"    {field_name} = request.{field_name}")
-    
+
     calculate_func.append("")
     calculate_func.append("    # Calculation logic")
-    
+
     # Add user's logic (properly indented)
     # Logic comes as semicolon-separated statements from TOML
     logic_statements = [stmt.strip() for stmt in logic.split(";") if stmt.strip()]
     for stmt in logic_statements:
         calculate_func.append(f"    {stmt}")
-    
+
     # Build response
-    calculate_func.extend([
-        "",
-        "    return CalculationResponse(",
-        "        result=result,",
-        "        working=working,",
-        '        interpretation=interpretation,',
-        f'        reference="{reference}",',
-        f'        metadata=build_metadata("{name}"),',
-        "    )",
-    ])
-    
+    calculate_func.extend(
+        [
+            "",
+            "    return CalculationResponse(",
+            "        result=result,",
+            "        working=working,",
+            "        interpretation=interpretation,",
+            f'        reference="{reference}",',
+            f'        metadata=build_metadata("{name}"),',
+            "    )",
+        ]
+    )
+
     # Combine all parts
     code_parts = [
         "\n".join(imports),
@@ -292,7 +306,7 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
         "\n".join(request_class),
         "\n".join(calculate_func),
     ]
-    
+
     return "\n\n".join(code_parts) + "\n"
 
 
@@ -310,16 +324,16 @@ def _python_type_from_spec(type_str: str) -> str:
 def generate_test_code(spec: dict[str, Any]) -> str:
     """
     Generate basic test code for calculator.
-    
+
     Args:
         spec: Calculator specification
-    
+
     Returns:
         Generated test code as string
     """
     name = spec["calculator"]["name"]
     inputs = spec["inputs"]
-    
+
     # Build test template
     test_code = [
         "from __future__ import annotations",
@@ -331,44 +345,48 @@ def generate_test_code(spec: dict[str, Any]) -> str:
         '    """Test basic calculator functionality."""',
         "    result = calculate({",
     ]
-    
+
     # Add sample inputs
     for inp in inputs:
         sample_value = _get_sample_value(inp)
         test_code.append(f'        "{inp["name"]}": {sample_value},')
-    
-    test_code.extend([
-        "    })",
-        "    assert result.result is not None",
-        "    assert result.metadata is not None",
-        "",
-        "",
-        "def test_response_structure():",
-        '    """Test that response has required fields."""',
-        "    result = calculate({",
-    ])
-    
+
+    test_code.extend(
+        [
+            "    })",
+            "    assert result.result is not None",
+            "    assert result.metadata is not None",
+            "",
+            "",
+            "def test_response_structure():",
+            '    """Test that response has required fields."""',
+            "    result = calculate({",
+        ]
+    )
+
     # Add sample inputs again
     for inp in inputs:
         sample_value = _get_sample_value(inp)
         test_code.append(f'        "{inp["name"]}": {sample_value},')
-    
-    test_code.extend([
-        "    })",
-        '    assert hasattr(result, "result")',
-        '    assert hasattr(result, "working")',
-        '    assert hasattr(result, "interpretation")',
-        '    assert hasattr(result, "metadata")',
-        '    assert hasattr(result, "reference")',
-    ])
-    
+
+    test_code.extend(
+        [
+            "    })",
+            '    assert hasattr(result, "result")',
+            '    assert hasattr(result, "working")',
+            '    assert hasattr(result, "interpretation")',
+            '    assert hasattr(result, "metadata")',
+            '    assert hasattr(result, "reference")',
+        ]
+    )
+
     return "\n".join(test_code) + "\n"
 
 
 def _get_sample_value(inp: dict[str, Any]) -> str:
     """Get a sample value for an input based on its type and constraints."""
     type_str = inp.get("type", "number")
-    
+
     if type_str == "number" or type_str == "integer":
         if "min" in inp:
             return str(inp["min"] + 1)
@@ -379,29 +397,31 @@ def _get_sample_value(inp: dict[str, Any]) -> str:
         return '"test"'
 
 
-def validate_generated_code(python_code: str, test_code: str, name: str) -> list[ValidationError]:
+def validate_generated_code(
+    python_code: str, test_code: str, name: str
+) -> list[ValidationError]:
     """
     Validate generated code using linting tools.
-    
+
     Args:
         python_code: Generated calculator code
         test_code: Generated test code
         name: Calculator name
-    
+
     Returns:
         List of validation errors
     """
     errors = []
-    
+
     # Create temporary files
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
         calc_file = tmp_path / f"{name}.py"
         test_file = tmp_path / f"test_{name}.py"
-        
+
         calc_file.write_text(python_code)
         test_file.write_text(test_code)
-        
+
         # Run black check
         try:
             result = subprocess.run(
@@ -411,14 +431,16 @@ def validate_generated_code(python_code: str, test_code: str, name: str) -> list
                 timeout=5,
             )
             if result.returncode != 0:
-                errors.append(ValidationError(
-                    field="formatting",
-                    message="Code formatting issues detected",
-                    severity="warning"
-                ))
+                errors.append(
+                    ValidationError(
+                        field="formatting",
+                        message="Code formatting issues detected",
+                        severity="warning",
+                    )
+                )
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
-        
+
         # Run ruff check
         try:
             result = subprocess.run(
@@ -428,38 +450,40 @@ def validate_generated_code(python_code: str, test_code: str, name: str) -> list
                 timeout=5,
             )
             if result.returncode != 0:
-                errors.append(ValidationError(
-                    field="linting",
-                    message=f"Linting issues: {result.stdout[:200]}",
-                    severity="warning"
-                ))
+                errors.append(
+                    ValidationError(
+                        field="linting",
+                        message=f"Linting issues: {result.stdout[:200]}",
+                        severity="warning",
+                    )
+                )
         except (subprocess.TimeoutExpired, FileNotFoundError):
             pass
-    
+
     return errors
 
 
 def generate_calculator(spec_input: str) -> GeneratedCalculator:
     """
     Main function to generate calculator from specification.
-    
+
     Args:
         spec_input: TOML/Markdown specification string
-    
+
     Returns:
         GeneratedCalculator with code and validation results
     """
     validation_errors = []
-    
+
     try:
         # Parse spec
         spec = parse_toml_spec(spec_input)
         name = spec["calculator"]["name"]
-        
+
         # Validate spec
         spec_errors = validate_calculator_spec(spec)
         validation_errors.extend(spec_errors)
-        
+
         if any(e.severity == "error" for e in validation_errors):
             return GeneratedCalculator(
                 name=name,
@@ -468,15 +492,15 @@ def generate_calculator(spec_input: str) -> GeneratedCalculator:
                 validation_errors=validation_errors,
                 is_valid=False,
             )
-        
+
         # Generate code
         python_code = generate_calculator_code(spec)
         test_code = generate_test_code(spec)
-        
+
         # Validate generated code
         code_errors = validate_generated_code(python_code, test_code, name)
         validation_errors.extend(code_errors)
-        
+
         return GeneratedCalculator(
             name=name,
             python_code=python_code,
@@ -484,13 +508,11 @@ def generate_calculator(spec_input: str) -> GeneratedCalculator:
             validation_errors=validation_errors,
             is_valid=True,
         )
-        
+
     except ValueError as e:
-        validation_errors.append(ValidationError(
-            field="spec",
-            message=str(e),
-            severity="error"
-        ))
+        validation_errors.append(
+            ValidationError(field="spec", message=str(e), severity="error")
+        )
         return GeneratedCalculator(
             name="",
             python_code="",
@@ -499,11 +521,11 @@ def generate_calculator(spec_input: str) -> GeneratedCalculator:
             is_valid=False,
         )
     except Exception as e:
-        validation_errors.append(ValidationError(
-            field="generation",
-            message=f"Unexpected error: {e}",
-            severity="error"
-        ))
+        validation_errors.append(
+            ValidationError(
+                field="generation", message=f"Unexpected error: {e}", severity="error"
+            )
+        )
         return GeneratedCalculator(
             name="",
             python_code="",
