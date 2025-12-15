@@ -104,40 +104,32 @@ jobs:
       - name: Build PR body
         id: pr_body
         run: |
-          {
-            echo "body<<EOFPR"
-            echo "## New Calculator: ${{ inputs.description }}"
-            echo ""
-            echo "### Files Added"
-            echo "- \`calculators/${{ inputs.calculator_name }}.py\`"
-            echo "- \`tests/test_${{ inputs.calculator_name }}.py\`"
-            echo ""
-            echo "### Specification"
-            echo "\`\`\`toml"
-            echo "${{ inputs.spec }}"
-            echo "\`\`\`"
-            echo ""
-            echo "### Test Results"
-            echo "\`\`\`"
-            echo "${{ steps.test.outputs.test_output }}"
-            echo "\`\`\`"
-            echo ""
-            if [ -n "${{ inputs.submitter_github }}" ]; then
-              echo "### Submitted By"
-              echo "GitHub: @${{ inputs.submitter_github }}"
-              echo ""
-            elif [ -n "${{ inputs.submitter_name }}" ]; then
-              echo "### Submitted By"
-              echo "Name: ${{ inputs.submitter_name }}"
-              if [ -n "${{ inputs.submitter_affiliation }}" ]; then
-                echo "Affiliation: ${{ inputs.submitter_affiliation }}"
-              fi
-              echo ""
-            fi
-            echo "---"
-            echo "*Generated automatically via the [Calculator Generator](https://api.rcpch.ac.uk/clinical-calculators/generator.html)*"
-            echo "EOFPR"
-          } >> $GITHUB_OUTPUT
+          cat >> $GITHUB_OUTPUT << 'EOFPR'
+          body<<EOFBODY
+          ## New Calculator: ${{ inputs.description }}
+
+          ### Files Added
+          - `calculators/${{ inputs.calculator_name }}.py`
+          - `tests/test_${{ inputs.calculator_name }}.py`
+
+          ### Specification
+          ```toml
+          ${{ inputs.spec }}
+          ```
+
+          ### Test Results
+          ```
+          ${{ steps.test.outputs.test_output }}
+          ```
+
+          ### Submitted By
+          ${{ inputs.submitter_github && format('GitHub: @{0}', inputs.submitter_github) || inputs.submitter_name && format('Name: {0}', inputs.submitter_name) || 'Anonymous' }}
+          ${{ inputs.submitter_affiliation && format('Affiliation: {0}', inputs.submitter_affiliation) || '' }}
+
+          ---
+          *Generated automatically via the [Calculator Generator](https://api.rcpch.ac.uk/clinical-calculators/generator.html)*
+          EOFBODY
+          EOFPR
 
       - name: Create Pull Request
         env:
