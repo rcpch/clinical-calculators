@@ -20,6 +20,7 @@ from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # local imports
+from core.chat_service import chat_service
 from core.generator import generate_calculator
 from core.loader import (
     DependencyError,
@@ -534,4 +535,48 @@ async def submit_calculator(
         raise HTTPException(
             status_code=500,
             detail=error_msg,
+        ) from e
+
+
+@app.post("/chat/calculator")
+@limiter.limit("10/minute")
+async def chat_calculator(request: Request, data: dict[str, Any]):
+    """
+    Chat endpoint for guided calculator creation.
+    
+    Rate limited to 10 requests per minute per IP.
+    
+    Request body:
+        {
+            "message": str,  # User's message
+            "history": [{"role": "user"|"assistant", "content": str}]  # Conversation history
+        }
+    
+    Response:
+        {
+            "response": str,  # Assistant's response
+            "is_complete": bool,  # True if TOML spec is ready
+            "toml_spec": str | None,  # Extracted TOML if present
+            "error": str | None
+        }
+    """
+    try:
+        message = data.get("message", "").strip()
+        history = data.get("history", [])
+
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
+
+        if not isinstance(history, list):
+            raise HTTPException(status_code=400, detail="History must be a list")
+
+        # Call chat service
+        result = await chat_service.chat(message, history)
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat error: {str(e)}",
         ) from e

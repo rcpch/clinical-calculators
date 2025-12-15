@@ -46,181 +46,239 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Input Form -->
-        <div class="card bg-base-100 shadow-xl lg:col-span-2">
-          <div class="card-body gap-4">
-            <div class="flex justify-between items-center">
-              <h2 class="card-title text-2xl">Calculator Details</h2>
-              <div class="flex gap-2">
-                <button class="btn btn-sm btn-outline" onclick="loadExample()">Load Example</button>
-                <button class="btn btn-sm btn-outline" onclick="clearForm()">Clear</button>
+
+        <!-- Tabs Container -->
+<div class="card bg-base-100 shadow-xl lg:col-span-2">
+  <div class="card-body gap-4">
+    <!-- Tab Navigation with Icons -->
+    <div class="generator-tabs">
+      <button class="tab-button active" onclick="switchTab(event, 'manual-form-panel')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+        Manual Form
+      </button>
+      <button class="tab-button" onclick="switchTab(event, 'ai-assistant-panel')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="{{ classes|default:'w-8 h-8' }}">
+	<!-- Large central sparkle -->
+	<path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z"/>
+	<!-- Small sparkle top right -->
+	<path d="M19 4L19.7 6.3L22 7L19.7 7.7L19 10L18.3 7.7L16 7L18.3 6.3L19 4Z"/>
+	<!-- Small sparkle bottom left -->
+	<path d="M5 14L5.7 16.3L8 17L5.7 17.7L5 20L4.3 17.7L2 17L4.3 16.3L5 14Z"/>
+	<!-- Tiny sparkle bottom right -->
+	<path d="M18 18L18.5 19.5L20 20L18.5 20.5L18 22L17.5 20.5L16 20L17.5 19.5L18 18Z"/>
+</svg>
+
+        AI Assistant
+      </button>
+    </div>
+
+    <!-- Tab Content Panels -->
+    <div class="tab-panels">
+      <!-- Manual Form Panel -->
+      <div id="manual-form-panel" class="tab-panel active">
+        <div class="space-y-6">
+          <div class="flex justify-between items-center">
+            <h2 class="card-title text-2xl">Calculator Details</h2>
+            <div class="flex gap-2">
+              <button class="btn btn-sm btn-outline" onclick="loadExample()">Load Example</button>
+              <button class="btn btn-sm btn-outline" onclick="clearForm()">Clear</button>
+            </div>
+          </div>
+
+          <form id="calculatorForm" class="space-y-6">
+            <!-- Calculator Info -->
+            <div class="space-y-3">
+              <h3 class="font-semibold text-lg">Basic Information</h3>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Description <span class="text-error">*</span></span>
+                </label>
+                <input type="text" id="calcDescription" class="input input-bordered" placeholder="Brief description of what this calculates" onkeyup="document.getElementById('calcName').value = generateVariableName(this.value)" required />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Calculator Name <span class="text-error">*</span></span>
+                  <span class="label-text-alt text-xs">Auto-generated from description</span>
+                </label>
+                <input type="text" id="calcName" class="input input-bordered bg-base-200" placeholder="e.g., bmi_calculator" readonly required />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Clinical Reference <span class="text-error">*</span></span>
+                </label>
+                <input type="text" id="calcReference" class="input input-bordered" placeholder="e.g., WHO Guidelines, NICE CG123" required />
               </div>
             </div>
 
-            <form id="calculatorForm" class="space-y-6">
-              <!-- Calculator Info -->
-              <div class="space-y-3">
-                <h3 class="font-semibold text-lg">Basic Information</h3>
-                
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Description <span class="text-error">*</span></span>
-                  </label>
-                  <input type="text" id="calcDescription" class="input input-bordered" placeholder="Brief description of what this calculates" onkeyup="document.getElementById('calcName').value = generateVariableName(this.value)" required />
-                </div>
+            <div class="divider"></div>
 
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Calculator Name <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">Auto-generated from description</span>
-                  </label>
-                  <input type="text" id="calcName" class="input input-bordered bg-base-200" placeholder="e.g., bmi_calculator" readonly required />
-                </div>
-
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Clinical Reference <span class="text-error">*</span></span>
-                  </label>
-                  <input type="text" id="calcReference" class="input input-bordered" placeholder="e.g., WHO Guidelines, NICE CG123" required />
-                </div>
+            <!-- Submitter Information (Optional) -->
+            <div class="space-y-3">
+              <h3 class="font-semibold text-lg">Your Information (Optional)</h3>
+              <p class="text-sm text-gray-600">Help us attribute this contribution to you</p>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">GitHub Username</span>
+                  <span class="label-text-alt text-xs">Preferred for proper attribution</span>
+                </label>
+                <input type="text" id="submitterGithub" class="input input-bordered" placeholder="e.g., username" />
               </div>
 
-              <div class="divider"></div>
-
-              <!-- Submitter Information (Optional) -->
-              <div class="space-y-3">
-                <h3 class="font-semibold text-lg">Your Information (Optional)</h3>
-                <p class="text-sm text-gray-600">Help us attribute this contribution to you</p>
-                
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">GitHub Username</span>
-                    <span class="label-text-alt text-xs">Preferred for proper attribution</span>
-                  </label>
-                  <input type="text" id="submitterGithub" class="input input-bordered" placeholder="e.g., username" />
+              <div class="collapse collapse-arrow bg-base-200">
+                <input type="checkbox" /> 
+                <div class="collapse-title text-sm font-medium">
+                  Or provide name and affiliation
                 </div>
-
-                <div class="collapse collapse-arrow bg-base-200">
-                  <input type="checkbox" /> 
-                  <div class="collapse-title text-sm font-medium">
-                    Or provide name and affiliation
+                <div class="collapse-content space-y-3">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Name</span>
+                    </label>
+                    <input type="text" id="submitterName" class="input input-bordered input-sm" placeholder="Your name" />
                   </div>
-                  <div class="collapse-content space-y-3">
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text">Name</span>
-                      </label>
-                      <input type="text" id="submitterName" class="input input-bordered input-sm" placeholder="Your name" />
-                    </div>
-                    
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text">Affiliation</span>
-                      </label>
-                      <input type="text" id="submitterAffiliation" class="input input-bordered input-sm" placeholder="Hospital, University, etc." />
-                    </div>
+                  
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Affiliation</span>
+                    </label>
+                    <input type="text" id="submitterAffiliation" class="input input-bordered input-sm" placeholder="Hospital, University, etc." />
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div class="divider"></div>
+            <div class="divider"></div>
 
-              <!-- Inputs Section -->
-              <div class="space-y-3">
-                <div class="flex justify-between items-center">
-                  <h3 class="font-semibold text-lg">Input Parameters</h3>
-                  <button type="button" class="btn btn-sm btn-outline btn-primary" onclick="addInput()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Input
-                  </button>
-                </div>
+            <!-- Inputs Section -->
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <h3 class="font-semibold text-lg">Input Parameters</h3>
+                <button type="button" class="btn btn-sm btn-outline btn-primary" onclick="addInput()">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Input
+                </button>
+              </div>
 
-                <div id="inputsList" class="space-y-3">
-                  <!-- Inputs will be added here dynamically -->
+              <div id="inputsList" class="space-y-3">
+                <!-- Inputs will be added here dynamically -->
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Constants (Optional) -->
+            <div class="space-y-3">
+              <h3 class="font-semibold text-lg">Constants (Optional)</h3>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Python Constants</span>
+                  <span class="label-text-alt text-xs">Define any constants needed</span>
+                </label>
+                <textarea id="calcConstants" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="GRAVITY = 9.81&#10;CONVERSION_FACTOR = 2.54"></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-xs">One constant per line, e.g., NAME = value</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Calculation Logic -->
+            <div class="space-y-3">
+              <h3 class="font-semibold text-lg">Calculation Logic</h3>
+              
+              <div class="alert alert-info text-xs py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div id="availableVariables">
+                  <em class="text-gray-500">Add input parameters to see available variables</em>
                 </div>
               </div>
 
-              <div class="divider"></div>
-
-              <!-- Constants (Optional) -->
-              <div class="space-y-3">
-                <h3 class="font-semibold text-lg">Constants (Optional)</h3>
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Python Constants</span>
-                    <span class="label-text-alt text-xs">Define any constants needed</span>
-                  </label>
-                  <textarea id="calcConstants" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="GRAVITY = 9.81&#10;CONVERSION_FACTOR = 2.54"></textarea>
-                  <label class="label">
-                    <span class="label-text-alt text-xs">One constant per line, e.g., NAME = value</span>
-                  </label>
-                </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Result <span class="text-error">*</span></span>
+                  <span class="label-text-alt text-xs">Main calculation result</span>
+                </label>
+                <textarea id="calcResult" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="weight / (height ** 2)" required></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-xs">Python expression that calculates the result</span>
+                </label>
               </div>
 
-              <div class="divider"></div>
-
-              <!-- Calculation Logic -->
-              <div class="space-y-3">
-                <h3 class="font-semibold text-lg">Calculation Logic</h3>
-                
-                <div class="alert alert-info text-xs py-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  <div id="availableVariables">
-                    <em class="text-gray-500">Add input parameters to see available variables</em>
-                  </div>
-                </div>
-
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Result <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">Main calculation result</span>
-                  </label>
-                  <textarea id="calcResult" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="weight / (height ** 2)" required></textarea>
-                  <label class="label">
-                    <span class="label-text-alt text-xs">Python expression that calculates the result</span>
-                  </label>
-                </div>
-
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Working <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">Show your calculation steps</span>
-                  </label>
-                  <textarea id="calcWorking" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI = weight / height² = [result]" required></textarea>
-                  <label class="label">
-                    <span class="label-text-alt text-xs">Use variable names and [result] placeholder. Will be stored as {"description": "..."}. Example: BMI = weight / height² = [result]</span>
-                  </label>
-                </div>
-
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Interpretation <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">Clinical meaning of the result</span>
-                  </label>
-                  <textarea id="calcInterpretation" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI is [result] kg/m²" required></textarea>
-                  <label class="label">
-                    <span class="label-text-alt text-xs">Plain text with [result] placeholder. Example: BMI is [result] kg/m²</span>
-                  </label>
-                </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Working <span class="text-error">*</span></span>
+                  <span class="label-text-alt text-xs">Show your calculation steps</span>
+                </label>
+                <textarea id="calcWorking" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI = weight / height² = [result]" required></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-xs">Use variable names and [result] placeholder. Will be stored as {"description": "..."}. Example: BMI = weight / height² = [result]</span>
+                </label>
               </div>
-            </form>
 
-            <div class="card-actions justify-end">
-              <button
-                id="generateBtn"
-                class="btn btn-outline btn-primary btn-lg"
-                onclick="generateCalculator()"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
-                Generate Calculator
-              </button>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Interpretation <span class="text-error">*</span></span>
+                  <span class="label-text-alt text-xs">Clinical meaning of the result</span>
+                </label>
+                <textarea id="calcInterpretation" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI is [result] kg/m²" required></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-xs">Plain text with [result] placeholder. Example: BMI is [result] kg/m²</span>
+                </label>
+              </div>
+            </div>
+          </form>
+
+          <div class="card-actions justify-end">
+            <button
+              id="generateBtn"
+              class="btn btn-outline btn-primary btn-lg"
+              onclick="generateCalculator()"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              Generate Calculator
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Assistant Panel -->
+      <div id="ai-assistant-panel" class="tab-panel">
+        <div class="space-y-4">
+          <h2 class="card-title text-2xl">AI Assistant</h2>
+          <p class="text-gray-600">Get help creating your calculator with AI-powered suggestions</p>
+          
+          <div id="chatSection" class="space-y-4">
+            <div id="chatMessages" class="bg-base-200 rounded-lg p-4 h-96 overflow-y-auto space-y-2">
+              <!-- Chat messages will appear here -->
+            </div>
+            <div class="flex gap-2">
+              <input 
+                type="text" 
+                id="chatInput" 
+                class="input input-bordered flex-1" 
+                placeholder="Ask the AI assistant..."
+                onkeypress="if(event.key === 'Enter') sendChatMessage()"
+              />
+              <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
         <!-- Help Panel -->
         <div class="card bg-base-100 shadow-xl">
@@ -405,6 +463,9 @@ Interpretation: BMI is [result] kg/m²</code></pre>
             </div>
           </div>
         </div>
+
+        
+
       </div>
     </div>
 
@@ -906,6 +967,178 @@ Interpretation: BMI is [result] kg/m²</code></pre>
           console.warn('Could not check feature availability:', error);
         }
       })();
+
+      window.switchTab = function(event, panelId) {
+  event.preventDefault();
+  
+  // Hide all panels
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+  
+  // Remove active class from all buttons
+  document.querySelectorAll('.tab-button').forEach(button => {
+    button.classList.remove('active');
+  });
+  
+  // Show selected panel
+  document.getElementById(panelId).classList.add('active');
+  
+  // Add active class to clicked button
+  event.target.closest('.tab-button').classList.add('active');
+};
+
+window.sendChatMessage = async function() {
+  const input = document.getElementById("chatInput");
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  console.log("Sending chat message:", message);
+
+  // Add user message to UI
+  const chatMessages = document.getElementById("chatMessages");
+  
+  // Add user message bubble
+  const userBubble = document.createElement("div");
+  userBubble.className = "chat chat-end mb-2";
+  userBubble.innerHTML = `
+    <div class="chat-bubble chat-bubble-primary bg-blue-500">
+      ${escapeHtml(message)}
+    </div>
+  `;
+  chatMessages.appendChild(userBubble);
+  input.value = "";
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  // Show loading state
+  const loadingBubble = document.createElement("div");
+  loadingBubble.className = "chat chat-start mb-2";
+  loadingBubble.innerHTML = `
+    <div class="chat-bubble chat-bubble-primary">
+      <span class="loading loading-dots loading-sm"></span>
+      <span class="text-xs ml-2">(This may take 30+ seconds on first load...)</span>
+    </div>
+  `;
+  chatMessages.appendChild(loadingBubble);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  try {
+    console.log("Fetching from:", `${API_CONFIG.baseUrl}/chat/calculator`);
+    
+    // Increase timeout to 90 seconds to allow Ollama model loading time
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 90000);
+
+    const response = await fetch(`${API_CONFIG.baseUrl}/chat/calculator`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: message,
+        history: window.chatHistory || [],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+    console.log("Response status:", response.status);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`API error: ${response.status} - ${errorData.detail || response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log("Response data:", data);
+
+    // Remove loading bubble
+    if (chatMessages.contains(loadingBubble)) {
+      chatMessages.removeChild(loadingBubble);
+    }
+
+    // Add assistant response
+    const assistantBubble = document.createElement("div");
+    assistantBubble.className = "chat chat-start mb-2";
+    assistantBubble.innerHTML = `
+  <div class="chat-bubble chat-bubble-secondary">
+    ${parseMarkdown(data.response || data.message || "No response")}
+  </div>
+`;
+    chatMessages.appendChild(assistantBubble);
+    
+    // Store in history
+    if (typeof window.chatHistory === 'undefined') {
+      window.chatHistory = [];
+    }
+    window.chatHistory.push({ role: "user", content: message });
+    window.chatHistory.push({ role: "assistant", content: data.response || data.message });
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  } catch (error) {
+    console.error("Chat error:", error);
+    
+    // Remove loading bubble if still there
+    if (chatMessages.contains(loadingBubble)) {
+      chatMessages.removeChild(loadingBubble);
+    }
+    
+    let errorMessage = error.message;
+    if (error.name === 'AbortError') {
+      errorMessage = 'Request timeout - Ollama may be unavailable or the model is taking too long to load';
+    }
+    
+    const errorBubble = document.createElement("div");
+    errorBubble.className = "chat chat-start mb-2";
+    errorBubble.innerHTML = `
+      <div class="chat-bubble chat-bubble-error">
+        Error: ${escapeHtml(errorMessage)}
+      </div>
+    `;
+    chatMessages.appendChild(errorBubble);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+};
+
+// Helper to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Initialize chat history if needed
+if (typeof window.chatHistory === 'undefined') {
+  window.chatHistory = [];
+}
+
+// Initialize chat history if needed
+if (typeof window.chatHistory === 'undefined') {
+  window.chatHistory = [];
+}
+
+function parseMarkdown(text) {
+  // Replace code blocks with <pre><code> tags
+  text = text.replace(/```(toml|python|json)?\n([\s\S]*?)```/g, (match, lang, code) => {
+    return `<pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto"><code class="language-${lang || 'text'}">${escapeHtml(code)}</code></pre>`;
+  });
+  
+  // Replace bold **text**
+  text = text.replace(/\*\*(.*?)\*/g, '<strong>$1</strong>');
+  
+  // Replace italic *text*
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  // Replace line breaks
+  text = text.replace(/\n/g, '<br>');
+  
+  // Replace bullet points
+  text = text.replace(/\* (.*?)<br>/g, '<li>$1</li>');
+  text = text.replace(/(<li>.*?<\/li>)/s, '<ul class="list-disc list-inside">$1</ul>');
+  
+  return text;
+}
     </script>
   </body>
 </html>
