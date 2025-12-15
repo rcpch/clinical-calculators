@@ -467,9 +467,10 @@ async def submit_calculator(
     body: dict[str, Any],
 ):
     """
-    Submit calculator by creating branch, running tests, and creating PR.
+    Submit calculator by triggering GitHub Actions workflow to create PR.
     
-    Takes calculator name, code, tests, and spec. Returns PR details.
+    Takes calculator name, code, tests, spec, and optional submitter info.
+    Returns workflow dispatch status.
     """
     from core.pr_service import get_pr_service, PRSubmissionError
     
@@ -478,20 +479,30 @@ async def submit_calculator(
         calculator_code = body.get("calculator_code")
         test_code = body.get("test_code")
         spec = body.get("spec")
+        description = body.get("description")
         
-        if not all([name, calculator_code, test_code, spec]):
+        if not all([name, calculator_code, test_code, spec, description]):
             raise HTTPException(
                 status_code=400,
-                detail="Missing required fields: name, calculator_code, test_code, spec",
+                detail="Missing required fields: name, calculator_code, test_code, spec, description",
             )
         
-        # Submit calculator and create PR
+        # Get optional submitter information
+        submitter_github = body.get("submitter_github")
+        submitter_name = body.get("submitter_name")
+        submitter_affiliation = body.get("submitter_affiliation")
+        
+        # Submit calculator and trigger workflow
         pr_service = get_pr_service()
-        result = pr_service.submit_calculator(
+        result = await pr_service.submit_calculator(
             name=name,
             calculator_code=calculator_code,
             test_code=test_code,
             spec=spec,
+            description=description,
+            submitter_github=submitter_github,
+            submitter_name=submitter_name,
+            submitter_affiliation=submitter_affiliation,
         )
         
         return {

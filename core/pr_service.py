@@ -5,11 +5,8 @@ Service for creating GitHub pull requests with generated calculators.
 from __future__ import annotations
 
 import os
-import subprocess
-from pathlib import Path
+import httpx
 from typing import Any
-
-from core.generator import generate_calculator_code
 
 
 class PRSubmissionError(Exception):
@@ -19,174 +16,106 @@ class PRSubmissionError(Exception):
 
 
 class GitHubPRService:
-    """Service for creating PRs with generated calculators."""
+    """Service for creating PRs with generated calculators via GitHub Actions."""
 
-    def __init__(self, repo_path: Path):
-        self.repo_path = repo_path
-        self.calculators_dir = repo_path / "calculators"
-        self.tests_dir = repo_path / "tests"
+    def __init__(self, github_token: str, repo_owner: str = "rcpch", repo_name: str = "clinical-calculators"):
+        self.github_token = github_token
+        self.repo_owner = repo_owner
+        self.repo_name = repo_name
+        self.api_base = "https://api.github.com"
 
-    def submit_calculator(
+    async def submit_calculator(
         self,
         name: str,
         calculator_code: str,
         test_code: str,
-        spec: dict[str, Any],
+        spec: str,
+        description: str,
+        submitter_github: str | None = None,
+        submitter_name: str | None = None,
+        submitter_affiliation: str | None = None,
     ) -> dict[str, str]:
         """
-        Create branch, commit files, run tests, and create PR.
+        Trigger GitHub Actions workflow to create PR.
 
         Args:
             name: Calculator name
             calculator_code: Generated calculator code
             test_code: Generated test code
-            spec: Calculator specification
+            spec: Calculator specification (TOML string)
+            description: Calculator description
+            submitter_github: Optional GitHub username of submitter
+            submitter_name: Optional name of submitter
+            submitter_affiliation: Optional affiliation of submitter
 
         Returns:
-            Dictionary with PR details (branch, pr_url, test_results)
+            Dictionary with workflow details
 
         Raises:
-            PRSubmissionError: If any step fails
+            PRSubmissionError: If workflow dispatch fails
         """
-        branch_name = f"calculator/{name}"
-
         try:
-            # Create new branch from live
-            self._run_git(["checkout", "live"])
-            self._run_git(["pull", "origin", "live"])
-            self._run_git(["checkout", "-b", branch_name])
-
-            # Write calculator file
-            calc_file = self.calculators_dir / f"{name}.py"
-            calc_file.write_text(calculator_code)
-
-            # Write test file
-            test_file = self.tests_dir / f"test_{name}.py"
-            test_file.write_text(test_code)
-
-            # Run tests
-            test_results = self._run_tests(test_file)
-
-            # Commit files
-            self._run_git(["add", str(calc_file), str(test_file)])
-            commit_message = self._build_commit_message(spec)
-            self._run_git(["commit", "-m", commit_message])
-
-            # Push branch
-            self._run_git(["push", "origin", branch_name])
-
-            # Create PR using gh CLI
-            pr_url = self._create_pr(branch_name, spec)
-
-            # Return to previous branch
-            self._run_git(["checkout", "-"])
-
-            return {
-                "branch": branch_name,
-                "pr_url": pr_url,
-                "test_results": test_results,
-                "calculator_file": str(calc_file),
-                "test_file": str(test_file),
+            # Prepare workflow inputs
+            inputs = {
+                "calculator_name": name,
+                "calculator_code": calculator_code,
+                "test_code": test_code,
+                "spec": spec,
+                "description": description,
             }
+            
+            # Add optional submitter information
+            if submitter_github:
+                inputs["submitter_github"] = submitter_github
+            if submitter_name:
+                inputs["submitter_name"] = submitter_name
+            if submitter_affiliation:
+                inputs["submitter_affiliation"] = submitter_affiliation
+            
+            # Trigger GitHub Actions workflow
+            url = f"{self.api_base}/repos/{self.repo_owner}/{self.repo_name}/actions/workflows/create-calculator-pr.yml/dispatches"
+            
+            headers = {
+                "Authorization": f"Bearer {self.github_token}",
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28",
+            }
+            
+            payload = {
+                "ref": "live",
+                "inputs": inputs,
+            }
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(url, json=payload, headers=headers)
+                
+                if response.status_code == 204:
+                    # Workflow dispatched successfully
+                    branch_name = f"calculator/{name}"
+                    return {
+                        "success": True,
+                        "message": "Workflow dispatched successfully",
+                        "branch": branch_name,
+                        "workflow_status": "Workflow is running. Check GitHub Actions for progress.",
+                        "pr_url": f"https://github.com/{self.repo_owner}/{self.repo_name}/pulls",
+                    }
+                else:
+                    raise PRSubmissionError(
+                        f"GitHub API error: {response.status_code} - {response.text}"
+                    )
 
         except Exception as e:
-            # Cleanup: try to delete branch if it was created
-            try:
-                self._run_git(["checkout", "-"])
-                self._run_git(["branch", "-D", branch_name])
-            except Exception:
-                pass
-            raise PRSubmissionError(f"Failed to submit calculator: {e}") from e
-
-    def _run_git(self, args: list[str]) -> str:
-        """Run git command and return output."""
-        result = subprocess.run(
-            ["git"] + args,
-            cwd=self.repo_path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-        return result.stdout
-
-    def _run_tests(self, test_file: Path) -> str:
-        """Run pytest on the test file."""
-        result = subprocess.run(
-            ["pytest", str(test_file), "-v"],
-            cwd=self.repo_path,
-            capture_output=True,
-            text=True,
-        )
-        return result.stdout
-
-    def _build_commit_message(self, spec: dict[str, Any]) -> str:
-        """Build descriptive commit message."""
-        calc = spec["calculator"]
-        name = calc["name"]
-        description = calc["description"]
-        reference = calc.get("reference", "")
-
-        message = f"Add {name} calculator\n\n"
-        message += f"{description}\n\n"
-        if reference:
-            message += f"Reference: {reference}\n\n"
-        message += "Generated via calculator generator UI"
-
-        return message
-
-    def _create_pr(self, branch_name: str, spec: dict[str, Any]) -> str:
-        """Create PR using gh CLI."""
-        calc = spec["calculator"]
-        description = calc["description"]
-        reference = calc.get("reference", "")
-
-        pr_body = f"""## Calculator Description
-{description}
-
-## Clinical Reference
-{reference or "Not specified"}
-
-## Generated Files
-- Calculator: `calculators/{calc['name']}.py`
-- Tests: `tests/test_{calc['name']}.py`
-
-## Inputs
-"""
-        for inp in spec["inputs"]:
-            pr_body += f"- **{inp['name']}** ({inp['type']}): {inp.get('description', '')}\n"
-            if "min" in inp or "max" in inp:
-                pr_body += f"  Range: {inp.get('min', '-')} to {inp.get('max', '-')}\n"
-
-        pr_body += "\n---\nGenerated via calculator generator UI"
-
-        # Create PR using gh CLI
-        result = subprocess.run(
-            [
-                "gh",
-                "pr",
-                "create",
-                "--base",
-                "live",
-                "--head",
-                branch_name,
-                "--title",
-                f"Add {calc['name']} calculator",
-                "--body",
-                pr_body,
-            ],
-            cwd=self.repo_path,
-            capture_output=True,
-            text=True,
-            check=True,
-        )
-
-        # Extract PR URL from output
-        pr_url = result.stdout.strip()
-        return pr_url
+            raise PRSubmissionError(f"Failed to dispatch workflow: {e}") from e
 
 
-# Singleton instance
 def get_pr_service() -> GitHubPRService:
     """Get PR service instance."""
-    repo_path = Path(__file__).parent.parent
-    return GitHubPRService(repo_path)
+    github_token = os.getenv("GITHUB_TOKEN")
+    if not github_token:
+        raise PRSubmissionError("GITHUB_TOKEN environment variable not set")
+    
+    return GitHubPRService(
+        github_token=github_token,
+        repo_owner=os.getenv("GITHUB_REPO_OWNER", "rcpch"),
+        repo_name=os.getenv("GITHUB_REPO_NAME", "clinical-calculators"),
+    )

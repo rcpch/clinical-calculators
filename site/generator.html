@@ -87,6 +87,44 @@
 
               <div class="divider"></div>
 
+              <!-- Submitter Information (Optional) -->
+              <div class="space-y-3">
+                <h3 class="font-semibold text-lg">Your Information (Optional)</h3>
+                <p class="text-sm text-gray-600">Help us attribute this contribution to you</p>
+                
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">GitHub Username</span>
+                    <span class="label-text-alt text-xs">Preferred for proper attribution</span>
+                  </label>
+                  <input type="text" id="submitterGithub" class="input input-bordered" placeholder="e.g., username" />
+                </div>
+
+                <div class="collapse collapse-arrow bg-base-200">
+                  <input type="checkbox" /> 
+                  <div class="collapse-title text-sm font-medium">
+                    Or provide name and affiliation
+                  </div>
+                  <div class="collapse-content space-y-3">
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text">Name</span>
+                      </label>
+                      <input type="text" id="submitterName" class="input input-bordered input-sm" placeholder="Your name" />
+                    </div>
+                    
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text">Affiliation</span>
+                      </label>
+                      <input type="text" id="submitterAffiliation" class="input input-bordered input-sm" placeholder="Hospital, University, etc." />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
               <!-- Inputs Section -->
               <div class="space-y-3">
                 <div class="flex justify-between items-center">
@@ -720,12 +758,20 @@ Interpretation: BMI is [result] kg/m²</code></pre>
         const name = document.getElementById('calcName').value;
         const description = document.getElementById('calcDescription').value;
         
+        // Get optional submitter information
+        const submitterGithub = document.getElementById('submitterGithub').value.trim();
+        const submitterName = document.getElementById('submitterName').value.trim();
+        const submitterAffiliation = document.getElementById('submitterAffiliation').value.trim();
+        
         generatedData = {
           spec: spec, // Send as TOML string
           calculator_code: pythonCode,
           test_code: testCode,
           name: name,
           description: description,
+          submitter_github: submitterGithub || null,
+          submitter_name: submitterName || null,
+          submitter_affiliation: submitterAffiliation || null,
         };
       };
 
