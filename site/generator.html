@@ -190,7 +190,7 @@
                   </label>
                   <textarea id="calcWorking" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI = weight / height² = [result]" required></textarea>
                   <label class="label">
-                    <span class="label-text-alt text-xs">Use variable names and [result] placeholder. Example: BMI = weight / height² = [result]</span>
+                    <span class="label-text-alt text-xs">Use variable names and [result] placeholder. Will be stored as {"description": "..."}. Example: BMI = weight / height² = [result]</span>
                   </label>
                 </div>
 
@@ -638,7 +638,8 @@ Interpretation: BMI is [result] kg/m²</code></pre>
           logic += constantLines.join('; ') + '; ';
         }
         logic += `result = ${result}; `;
-        logic += `working = ${workingFString}; `;
+        // Working must be a dictionary for CalculationResponse
+        logic += `working = {"description": ${workingFString}}; `;
         logic += `interpretation = ${interpretationFString}`;
 
         let toml = `[calculator]\n`;
