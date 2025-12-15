@@ -103,7 +103,18 @@ async def custom_redoc_html(request: Request) -> HTMLResponse:
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    """Health check endpoint with feature flags."""
+    import os
+
+    return {
+        "status": "ok",
+        "features": {
+            "pr_submission": bool(os.getenv("GITHUB_TOKEN")),
+            "ollama": bool(
+                os.getenv("OLLAMA_ENABLED", "").lower() in ("true", "1", "yes")
+            ),
+        },
+    }
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -511,12 +522,16 @@ async def submit_calculator(
         }
 
     except PRSubmissionError as e:
+        error_msg = str(e)
+        print(f"PR Submission Error: {error_msg}")  # Log for debugging
         raise HTTPException(
             status_code=500,
-            detail=str(e),
+            detail=error_msg,
         ) from e
     except Exception as e:
+        error_msg = f"Failed to submit calculator: {str(e)}"
+        print(f"Unexpected Error: {error_msg}")  # Log for debugging
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to submit calculator: {str(e)}",
+            detail=error_msg,
         ) from e
