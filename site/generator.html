@@ -311,14 +311,15 @@ Interpretation: BMI is [result] kg/m²</code></pre>
               <!-- Action Buttons -->
               <div class="flex gap-3 mb-4">
                 <button 
-                  class="btn btn-primary flex-1"
-                  onclick="enhanceTests()"
+                  class="btn btn-primary flex-1 btn-disabled"
+                  disabled
                   id="enhanceTestsBtn"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                   </svg>
                   Enhance Tests with AI
+                  <span class="badge badge-warning badge-sm ml-2">Coming Soon</span>
                 </button>
                 
                 <button 
@@ -338,7 +339,6 @@ Interpretation: BMI is [result] kg/m²</code></pre>
                 <div class="text-sm">
                   <p class="font-semibold mb-2">Automated Workflow:</p>
                   <ol class="list-decimal list-inside space-y-1">
-                    <li><strong>Enhance Tests with AI</strong> (optional) - Use Ollama to generate comprehensive test cases</li>
                     <li><strong>Submit PR</strong> - Automatically create branch, commit files, run tests, and create pull request</li>
                   </ol>
                   <div class="divider my-2"></div>
@@ -718,12 +718,14 @@ Interpretation: BMI is [result] kg/m²</code></pre>
         const pythonCode = document.getElementById('pythonCode').textContent;
         const testCode = document.getElementById('testCode').textContent;
         const name = document.getElementById('calcName').value;
+        const description = document.getElementById('calcDescription').value;
         
         generatedData = {
-          spec: JSON.parse(spec.replace(/^[^{]*/, '').replace(/[^}]*$/, '')), // Extract JSON from TOML
+          spec: spec, // Send as TOML string
           calculator_code: pythonCode,
           test_code: testCode,
           name: name,
+          description: description,
         };
       };
 
