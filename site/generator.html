@@ -308,17 +308,40 @@ Interpretation: BMI is [result] kg/m²</code></pre>
                 </div>
               </div>
 
+              <!-- Action Buttons -->
+              <div class="flex gap-3 mb-4">
+                <button 
+                  class="btn btn-primary flex-1"
+                  onclick="enhanceTests()"
+                  id="enhanceTestsBtn"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  Enhance Tests with AI
+                </button>
+                
+                <button 
+                  class="btn btn-success flex-1"
+                  onclick="submitCalculator()"
+                  id="submitPRBtn"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Submit PR
+                </button>
+              </div>
+
               <div class="alert">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-info shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <div class="text-sm">
-                  <p class="font-semibold">Next Steps:</p>
+                  <p class="font-semibold">Automated Workflow:</p>
                   <ol class="list-decimal list-inside mt-2 space-y-1">
-                    <li>Review the generated code</li>
-                    <li>Save the calculator code to <code class="bg-base-200 px-1 rounded">calculators/{name}.py</code></li>
-                    <li>Save the test code to <code class="bg-base-200 px-1 rounded">tests/test_{name}.py</code></li>
-                    <li>Run tests: <code class="bg-base-200 px-1 rounded">pytest tests/test_{name}.py</code></li>
-                    <li>Submit a pull request to the repository</li>
+                    <li><strong>Enhance Tests with AI</strong> - Use Ollama to generate comprehensive test cases</li>
+                    <li><strong>Submit PR</strong> - Automatically create branch, commit files, run tests, and create pull request</li>
                   </ol>
+                  <p class="mt-2 text-xs text-gray-600">Or manually: Download code → Add to repo → Run pytest → Create PR</p>
                 </div>
               </div>
             </div>
@@ -669,6 +692,127 @@ Interpretation: BMI is [result] kg/m²</code></pre>
           document.getElementById('loadingState').classList.add('hidden');
           document.getElementById('errorList').innerHTML = `<div>Network error: ${error.message}</div>`;
           document.getElementById('errorState').classList.remove('hidden');
+        }
+      };
+
+      // Store generated data for later use
+      let generatedData = null;
+
+      // Update generateCalculator to store data
+      const originalGenerateCalculator = window.generateCalculator;
+      window.generateCalculator = async function() {
+        await originalGenerateCalculator();
+        
+        // Store the generated data
+        const spec = buildTOMLSpec();
+        const pythonCode = document.getElementById('pythonCode').textContent;
+        const testCode = document.getElementById('testCode').textContent;
+        const name = document.getElementById('calcName').value;
+        
+        generatedData = {
+          spec: JSON.parse(spec.replace(/^[^{]*/, '').replace(/[^}]*$/, '')), // Extract JSON from TOML
+          calculator_code: pythonCode,
+          test_code: testCode,
+          name: name,
+        };
+      };
+
+      window.enhanceTests = async function() {
+        if (!generatedData) {
+          alert('Please generate a calculator first');
+          return;
+        }
+
+        const btn = document.getElementById('enhanceTestsBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading loading-spinner"></span>Enhancing...';
+
+        try {
+          const response = await fetch(`${API_CONFIG.baseUrl}/generate-enhanced-tests`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              spec: generatedData.spec,
+              calculator_code: generatedData.calculator_code,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // Update test code with enhanced version
+            document.getElementById('testCode').textContent = data.test_code;
+            generatedData.test_code = data.test_code;
+            
+            // Switch to test tab
+            document.querySelectorAll('input[name="code_tabs"]')[1].checked = true;
+            
+            alert('✅ Tests enhanced with AI-generated test cases!');
+          } else {
+            alert(`Error: ${data.detail}`);
+          }
+        } catch (error) {
+          alert(`Network error: ${error.message}`);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>Enhance Tests with AI';
+        }
+      };
+
+      window.submitCalculator = async function() {
+        if (!generatedData) {
+          alert('Please generate a calculator first');
+          return;
+        }
+
+        const confirmed = confirm(
+          'This will:\n' +
+          '1. Create a new branch\n' +
+          '2. Add calculator and test files\n' +
+          '3. Run tests\n' +
+          '4. Create a pull request\n\n' +
+          'Continue?'
+        );
+
+        if (!confirmed) return;
+
+        const btn = document.getElementById('submitPRBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading loading-spinner"></span>Submitting...';
+
+        try {
+          const response = await fetch(`${API_CONFIG.baseUrl}/submit-calculator`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(generatedData),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert(
+              `✅ Success!\n\n` +
+              `Branch: ${data.branch}\n` +
+              `PR: ${data.pr_url}\n\n` +
+              `Test Results:\n${data.test_results}`
+            );
+            
+            // Open PR in new tab
+            if (data.pr_url) {
+              window.open(data.pr_url, '_blank');
+            }
+          } else {
+            alert(`Error: ${data.detail}`);
+          }
+        } catch (error) {
+          alert(`Network error: ${error.message}`);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Submit PR';
         }
       };
     </script>

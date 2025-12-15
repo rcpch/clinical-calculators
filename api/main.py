@@ -420,3 +420,92 @@ async def calculator_submit(name: str, request: Request):
         return HTMLResponse(f"<pre>{body}</pre>")
     except Exception as e:
         return HTMLResponse(f"<pre>Error: {str(e)}</pre>", status_code=400)
+
+
+@app.post("/generate-enhanced-tests")
+@limiter.limit("5/minute")
+async def generate_enhanced_tests(
+    request: Request,
+    body: dict[str, Any],
+):
+    """
+    Generate enhanced tests using Ollama LLM.
+    
+    Takes calculator spec and generated code, returns LLM-enhanced test code.
+    """
+    from core.ollama_service import ollama_service
+    
+    try:
+        spec = body.get("spec")
+        calculator_code = body.get("calculator_code")
+        
+        if not spec or not calculator_code:
+            raise HTTPException(
+                status_code=400,
+                detail="Missing required fields: spec and calculator_code",
+            )
+        
+        # Generate enhanced tests using Ollama
+        enhanced_tests = await ollama_service.generate_tests(spec, calculator_code)
+        
+        return {
+            "success": True,
+            "test_code": enhanced_tests,
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to generate enhanced tests: {str(e)}",
+        )
+
+
+@app.post("/submit-calculator")
+@limiter.limit("3/minute")
+async def submit_calculator(
+    request: Request,
+    body: dict[str, Any],
+):
+    """
+    Submit calculator by creating branch, running tests, and creating PR.
+    
+    Takes calculator name, code, tests, and spec. Returns PR details.
+    """
+    from core.pr_service import get_pr_service, PRSubmissionError
+    
+    try:
+        name = body.get("name")
+        calculator_code = body.get("calculator_code")
+        test_code = body.get("test_code")
+        spec = body.get("spec")
+        
+        if not all([name, calculator_code, test_code, spec]):
+            raise HTTPException(
+                status_code=400,
+                detail="Missing required fields: name, calculator_code, test_code, spec",
+            )
+        
+        # Submit calculator and create PR
+        pr_service = get_pr_service()
+        result = pr_service.submit_calculator(
+            name=name,
+            calculator_code=calculator_code,
+            test_code=test_code,
+            spec=spec,
+        )
+        
+        return {
+            "success": True,
+            **result,
+        }
+        
+    except PRSubmissionError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=str(e),
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to submit calculator: {str(e)}",
+        )
