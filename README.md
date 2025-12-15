@@ -21,6 +21,10 @@ Currently includes:
 ### Docker (Recommended)
 
 ```bash
+# Optional: Configure environment variables for PR submission
+cp .env.example .env
+# Edit .env and add your GITHUB_TOKEN
+
 # Start the API server
 ./s/dev up
 
