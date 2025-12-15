@@ -107,6 +107,24 @@ async function loadCalculators() {
   }
 }
 
+// Refresh calculators from API
+async function refreshCalculators() {
+  const btn = document.getElementById("refresh-calculators-btn");
+  if (btn) {
+    btn.disabled = true;
+    btn.classList.add("loading");
+  }
+
+  await loadCalculators();
+  renderCalculatorList();
+  updateCalculatorCount();
+
+  if (btn) {
+    btn.disabled = false;
+    btn.classList.remove("loading");
+  }
+}
+
 // Render calculator list
 function renderCalculatorList() {
   const container = document.getElementById("calculator-list");
