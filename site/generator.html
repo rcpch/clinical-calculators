@@ -549,9 +549,16 @@ Interpretation: BMI is [result] kg/m²</code></pre>
           return null;
         }
 
-        // Convert working and interpretation to f-strings, escaping quotes and newlines
-        const workingFString = `f'${working.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`;
-        const interpretationFString = `f'${interpretation.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`;
+        // Convert working and interpretation to f-strings only if they contain [result] placeholder
+        const workingHasPlaceholder = working.includes('[result]');
+        const workingFString = workingHasPlaceholder 
+          ? `f'${working.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`
+          : `'${working.replace(/'/g, "\\'")}'`;
+        
+        const interpretationHasPlaceholder = interpretation.includes('[result]');
+        const interpretationFString = interpretationHasPlaceholder
+          ? `f'${interpretation.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`
+          : `'${interpretation.replace(/'/g, "\\'")}'`;
         
         // Build logic from constants and the three parts
         let logic = '';
@@ -578,7 +585,7 @@ Interpretation: BMI is [result] kg/m²</code></pre>
         inputDivs.forEach(div => {
           const varName = div.querySelector('[name="inputVarName"]').value.trim();
           const type = div.querySelector('[name="inputType"]').value;
-          const description = div.querySelector('[name="inputDescription"]').value.trim();
+          const description = div.querySelector('[name="inputDescription"]').value.trim().replace(/\n/g, ' ');
           const unit = div.querySelector('[name="inputUnit"]').value.trim();
           const required = div.querySelector('[name="inputRequired"]').checked;
           const min = div.querySelector('[name="inputMin"]').value.trim();
