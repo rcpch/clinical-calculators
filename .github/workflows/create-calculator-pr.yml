@@ -66,6 +66,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Delete remote branch if it exists
+          git push origin --delete calculator/${{ inputs.calculator_name }} || true
           git checkout -b calculator/${{ inputs.calculator_name }}
 
       - name: Write calculator file
