@@ -132,7 +132,11 @@ def get_pr_service() -> GitHubPRService:
     """Get PR service instance."""
     github_token = os.getenv("GITHUB_TOKEN")
     if not github_token:
-        raise PRSubmissionError("GITHUB_TOKEN environment variable not set")
+        raise PRSubmissionError(
+            "PR submission is not configured on this server. "
+            "GITHUB_TOKEN environment variable is required. "
+            "Please contact the administrator or submit your calculator manually via GitHub."
+        )
 
     return GitHubPRService(
         github_token=github_token,
