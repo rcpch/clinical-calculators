@@ -133,11 +133,12 @@ jobs:
           } >> $GITHUB_OUTPUT
       
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          branch: calculator/${{ inputs.calculator_name }}
-          title: "Add ${{ inputs.calculator_name }} calculator"
-          body: ${{ steps.pr_body.outputs.body }}
-          base: live
-          labels: calculator,auto-generated
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base live \
+            --head calculator/${{ inputs.calculator_name }} \
+            --title "Add ${{ inputs.calculator_name }} calculator" \
+            --body "${{ steps.pr_body.outputs.body }}" \
+            --label calculator,auto-generated
