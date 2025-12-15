@@ -8,10 +8,8 @@ services:
       - "8000:8000"
     volumes:
       - .:/app
-    env_file:
-      - .env
     environment:
-      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
       - GITHUB_REPO_OWNER=${GITHUB_REPO_OWNER:-rcpch}
       - GITHUB_REPO_NAME=${GITHUB_REPO_NAME:-clinical-calculators}
       - OLLAMA_ENABLED=${OLLAMA_ENABLED:-false}

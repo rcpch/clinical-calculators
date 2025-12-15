@@ -21,9 +21,9 @@ Currently includes:
 ### Docker (Recommended)
 
 ```bash
-# Optional: Configure environment variables for PR submission
-cp .env.example .env
-# Edit .env and add your GITHUB_TOKEN
+# Optional: Configure environment variables for PR submission feature
+# Copy .env.example to .env and add your GITHUB_TOKEN
+# This is only needed if you want to test PR submission locally
 
 # Start the API server
 ./s/dev up
