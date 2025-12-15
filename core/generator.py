@@ -17,25 +17,25 @@ from typing import Any
 def _format_with_black(code: str) -> str:
     """Format Python code using Black."""
     try:
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(code)
             temp_path = f.name
-        
+
         # Run Black on the temp file
         result = subprocess.run(
-            ['black', '--quiet', temp_path],
+            ["black", "--quiet", temp_path],
             capture_output=True,
             text=True,
-            timeout=5
+            timeout=5,
         )
-        
+
         # Read the formatted code
-        with open(temp_path, 'r') as f:
+        with open(temp_path) as f:
             formatted_code = f.read()
-        
+
         # Clean up
         Path(temp_path).unlink()
-        
+
         return formatted_code if result.returncode == 0 else code
     except Exception:
         # If Black fails, return original code
