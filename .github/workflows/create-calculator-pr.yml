@@ -145,5 +145,4 @@ jobs:
             --base live \
             --head calculator/${{ inputs.calculator_name }} \
             --title "Add ${{ inputs.calculator_name }} calculator" \
-            --body "$PR_BODY" \
-            --label "calculator,auto-generated"
+            --body "$PR_BODY" || true
