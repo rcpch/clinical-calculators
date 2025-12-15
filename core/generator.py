@@ -254,6 +254,8 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
             field_args.append(f'ge={inp["min"]}')
         if "max" in inp:
             field_args.append(f'le={inp["max"]}')
+
+        # Handle long descriptions
         if field_desc:
             field_args.append(f'description="{field_desc}"')
 
@@ -261,13 +263,10 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
         single_line = f"    {field_name}: {field_type} = Field({', '.join(field_args)})"
 
         if len(single_line) > 88:
-            # Break into multiple lines
+            # Break into multiple lines - let Black handle the formatting
             request_class.append(f"    {field_name}: {field_type} = Field(")
-            for i, arg in enumerate(field_args):
-                if i < len(field_args) - 1:
-                    request_class.append(f"        {arg},")
-                else:
-                    request_class.append(f"        {arg}")
+            for arg in field_args:
+                request_class.append(f"        {arg},")
             request_class.append("    )")
         else:
             request_class.append(single_line)
