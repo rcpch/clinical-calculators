@@ -1,13 +1,44 @@
 #!/usr/bin/env python3
 """Test script to query the Ollama API and identify the model."""
 
-import httpx
+import os
 import json
 
-API_KEY = "9bcb8412b18847a7863ae7a4611be49c"
-BASE_URL = "https://api.rcpch.ac.uk/ollama/v1/chat/completions"
+try:
+    import httpx
+except ImportError:
+    httpx = None
 
-async def test_model():
+try:
+    import pytest
+except ImportError:
+    pytest = None
+
+API_KEY = os.getenv("OLLAMA_API_KEY", "9bcb8412b18847a7863ae7a4611be49c")
+BASE_URL = os.getenv("OLLAMA_BASE_URL", "https://api.rcpch.ac.uk/ollama/v1/chat/completions")
+
+def is_ollama_available():
+    """Check if Ollama service is configured and available."""
+    if not httpx or not BASE_URL or not API_KEY:
+        return False
+    
+    try:
+        # Quick health check
+        with httpx.Client(timeout=5.0) as client:
+            response = client.get(BASE_URL.replace('/v1/chat/completions', '/health'), 
+                                headers={"Ocp-Apim-Subscription-Key": API_KEY})
+            return response.status_code < 500
+    except Exception:
+        return False
+
+if pytest:
+    @pytest.mark.asyncio
+    @pytest.mark.skipif(not is_ollama_available(), reason="Ollama API not available or not configured")
+    async def test_model_detection():
+        """Test the Ollama API with different models."""
+        await _query_ollama_models()
+
+async def _query_ollama_models():
     """Test the API with different models."""
     
     models_to_try = ["llama2", "llama3", "mistral", "qwen2.5", "deepseek-r1"]
@@ -51,7 +82,7 @@ async def test_model():
 
 if __name__ == "__main__":
     import asyncio
-    result = asyncio.run(test_model())
+    result = asyncio.run(_query_ollama_models())
     if result:
         print(f"\n✅ Working model found: {result}")
     else:
