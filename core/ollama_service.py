@@ -36,24 +36,49 @@ class OllamaService:
         """
         prompt = self._build_test_generation_prompt(calculator_spec, generated_code)
 
-        # Build headers with optional API key
-        headers = {}
+        # Build headers - use Ocp-Apim-Subscription-Key for Azure API Management
+        headers = {"Content-Type": "application/json"}
         if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+            headers["Ocp-Apim-Subscription-Key"] = self.api_key
+
+        # Check if using OpenAI-compatible endpoint (v1/chat/completions)
+        is_openai_format = "/v1/chat/completions" in self.base_url
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
-            response = await client.post(
-                f"{self.base_url}/api/generate",
-                json={
-                    "model": self.model,
-                    "prompt": prompt,
-                    "stream": False,
-                },
-                headers=headers,
-            )
-            response.raise_for_status()
-            result = response.json()
-            return result.get("response", "")
+            if is_openai_format:
+                # OpenAI-compatible format
+                response = await client.post(
+                    self.base_url,
+                    json={
+                        "model": self.model,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are a medical software test engineer.",
+                            },
+                            {"role": "user", "content": prompt},
+                        ],
+                        "temperature": 0.7,
+                    },
+                    headers=headers,
+                )
+                response.raise_for_status()
+                result = response.json()
+                return result["choices"][0]["message"]["content"]
+            else:
+                # Standard Ollama format
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json={
+                        "model": self.model,
+                        "prompt": prompt,
+                        "stream": False,
+                    },
+                    headers=headers,
+                )
+                response.raise_for_status()
+                result = response.json()
+                return result.get("response", "")
 
     def _build_test_generation_prompt(
         self,
