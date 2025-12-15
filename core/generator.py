@@ -15,15 +15,31 @@ from typing import Any
 
 
 def _format_with_black(code: str) -> str:
-    """Format Python code using Black."""
+    """Format Python code using isort, Black, and Ruff."""
     try:
         with tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
             f.write(code)
             temp_path = f.name
 
-        # Run Black on the temp file
-        result = subprocess.run(
+        # Run isort first to sort imports
+        subprocess.run(
+            ["isort", "--quiet", temp_path],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+
+        # Run Black to format
+        subprocess.run(
             ["black", "--quiet", temp_path],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+
+        # Run Ruff to fix any linting issues
+        subprocess.run(
+            ["ruff", "check", "--fix", "--quiet", temp_path],
             capture_output=True,
             text=True,
             timeout=5,
@@ -36,9 +52,9 @@ def _format_with_black(code: str) -> str:
         # Clean up
         Path(temp_path).unlink()
 
-        return formatted_code if result.returncode == 0 else code
+        return formatted_code
     except Exception:
-        # If Black fails, return original code
+        # If formatting fails, return original code
         return code
 
 
