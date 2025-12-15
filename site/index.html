@@ -10,70 +10,8 @@
   <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   
-  <style>
-    /* DaisyUI Theme Override */
-    [data-theme="light"] {
-      --p: 199 89% 51%;     /* primary: #11A7F2 */
-      --pc: 0 0% 100%;      /* primary-content: white */
-      --s: 215 59% 50%;     /* secondary: #3366CC */
-      --sc: 0 0% 100%;      /* secondary-content: white */
-      --a: 90 60% 50%;      /* accent: #66CC33 */
-      --ac: 0 0% 100%;      /* accent-content: white */
-      --n: 240 73% 20%;     /* neutral: #0D0D58 */
-      --nc: 0 0% 100%;      /* neutral-content: white */
-      --b1: 0 0% 100%;      /* base-100: white */
-      --b2: 0 0% 96%;       /* base-200: light gray */
-      --b3: 0 0% 92%;       /* base-300: gray */
-      --bc: 240 10% 20%;    /* base-content: dark gray text */
-    }
-    
-    body {
-      background: white;
-      color: #333;
-    }
-    
-    .card {
-      background-color: white;
-      color: #333;
-    }
-    
-    .card-title {
-      color: #0D0D58;
-    }
-    
-    .btn-primary {
-      background-color: #11A7F2;
-      border-color: #11A7F2;
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background-color: #0D0D58;
-      border-color: #0D0D58;
-      color: white;
-    }
-    
-    #doc-content h1, #doc-content h2, #doc-content h3 {
-      color: var(--rcpch-dark-blue);
-      font-weight: bold;
-      margin-top: 1.5rem;
-      margin-bottom: 0.75rem;
-    }
-    
-    #doc-content pre {
-      background: #f3f4f6;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      overflow-x: auto;
-    }
-    
-    #doc-content code {
-      background: #f3f4f6;
-      padding: 0.125rem 0.25rem;
-      border-radius: 0.25rem;
-      font-size: 0.875em;
-    }
-  </style>
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body data-theme="rcpch">
   
@@ -111,11 +49,25 @@
           <p class="text-gray-600">Select a calculator to get started (<span id="calculator-count">-</span> available)</p>
         </div>
         
-        <div id="calculator-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Calculators will be loaded here -->
-          <div class="col-span-full flex justify-center p-8">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
+        <div class="bg-base-100 rounded-lg shadow-xl overflow-hidden">
+          <div id="calculator-list" class="divide-y divide-gray-200">
+            <!-- Calculators will be loaded here -->
+            <div class="flex justify-center p-8">
+              <span class="loading loading-spinner loading-lg text-primary"></span>
+            </div>
           </div>
+        </div>
+
+        <!-- Generator Link -->
+        <div class="text-center mt-8">
+          <div class="divider"></div>
+          <a href="generator.html" class="btn btn-outline btn-primary btn-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Create Your Own Calculator
+          </a>
+          <p class="text-sm text-gray-500 mt-2">Generate a new calculator from a TOML specification</p>
         </div>
       </section>
 

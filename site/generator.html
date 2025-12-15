@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator Generator - RCPCH Clinical Calculators</title>
+  <link rel="icon" type="image/x-icon" href="./favicon.ico">
+  
+  <!-- DaisyUI 5 + Tailwind CSS 4 -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-theme="light">
+    <!-- Header -->
+    <div class="navbar bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm py-4">
+      <div class="container mx-auto flex justify-between items-center">
+        <a href="index.html" class="btn btn-ghost normal-case text-xl font-bold text-[#0D0D58] flex items-center gap-2">
+          <img src="./favicon.ico" alt="RCPCH Logo" class="w-8 h-8 flex-shrink-0">
+          <span>RCPCH Clinical Calculators</span>
+        </a>
+        <ul class="menu menu-horizontal px-1">
+          <li><a href="index.html" class="text-gray-700 hover:text-[#11A7F2]">Home</a></li>
+          <li><a href="generator.html" class="text-[#11A7F2] font-semibold">Generator</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="container mx-auto p-4 max-w-7xl">
+      <div class="hero bg-base-100 rounded-lg shadow-xl mb-6">
+        <div class="hero-content text-center py-8">
+          <div class="max-w-3xl">
+            <h1 class="text-5xl font-bold">Calculator Generator</h1>
+            <p class="text-lg py-4">
+              Create a new clinical calculator by providing specifications.
+              The generator will create Python code and tests automatically.
+            </p>
+            <div class="alert alert-info">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              <span>This tool validates your specification and generates production-ready code.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Input Form -->
+        <div class="card bg-base-100 shadow-xl lg:col-span-2">
+          <div class="card-body gap-4">
+            <div class="flex justify-between items-center">
+              <h2 class="card-title text-2xl">Calculator Details</h2>
+              <div class="flex gap-2">
+                <button class="btn btn-sm btn-outline" onclick="loadExample()">Load Example</button>
+                <button class="btn btn-sm btn-outline" onclick="clearForm()">Clear</button>
+              </div>
+            </div>
+
+            <form id="calculatorForm" class="space-y-6">
+              <!-- Calculator Info -->
+              <div class="space-y-3">
+                <h3 class="font-semibold text-lg">Basic Information</h3>
+                
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Description <span class="text-error">*</span></span>
+                  </label>
+                  <input type="text" id="calcDescription" class="input input-bordered" placeholder="Brief description of what this calculates" onkeyup="document.getElementById('calcName').value = generateVariableName(this.value)" required />
+                </div>
+
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Calculator Name <span class="text-error">*</span></span>
+                    <span class="label-text-alt text-xs">Auto-generated from description</span>
+                  </label>
+                  <input type="text" id="calcName" class="input input-bordered bg-base-200" placeholder="e.g., bmi_calculator" readonly required />
+                </div>
+
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Clinical Reference <span class="text-error">*</span></span>
+                  </label>
+                  <input type="text" id="calcReference" class="input input-bordered" placeholder="e.g., WHO Guidelines, NICE CG123" required />
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Submitter Information (Optional) -->
+              <div class="space-y-3">
+                <h3 class="font-semibold text-lg">Your Information (Optional)</h3>
+                <p class="text-sm text-gray-600">Help us attribute this contribution to you</p>
+                
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">GitHub Username</span>
+                    <span class="label-text-alt text-xs">Preferred for proper attribution</span>
+                  </label>
+                  <input type="text" id="submitterGithub" class="input input-bordered" placeholder="e.g., username" />
+                </div>
+
+                <div class="collapse collapse-arrow bg-base-200">
+                  <input type="checkbox" /> 
+                  <div class="collapse-title text-sm font-medium">
+                    Or provide name and affiliation
+                  </div>
+                  <div class="collapse-content space-y-3">
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text">Name</span>
+                      </label>
+                      <input type="text" id="submitterName" class="input input-bordered input-sm" placeholder="Your name" />
+                    </div>
+                    
+                    <div class="form-control">
+                      <label class="label">
+                        <span class="label-text">Affiliation</span>
+                      </label>
+                      <input type="text" id="submitterAffiliation" class="input input-bordered input-sm" placeholder="Hospital, University, etc." />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Inputs Section -->
+              <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                  <h3 class="font-semibold text-lg">Input Parameters</h3>
+                  <button type="button" class="btn btn-sm btn-outline btn-primary" onclick="addInput()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Input
+                  </button>
+                </div>
+
+                <div id="inputsList" class="space-y-3">
+                  <!-- Inputs will be added here dynamically -->
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Constants (Optional) -->
+              <div class="space-y-3">
+                <h3 class="font-semibold text-lg">Constants (Optional)</h3>
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Python Constants</span>
+                    <span class="label-text-alt text-xs">Define any constants needed</span>
+                  </label>
+                  <textarea id="calcConstants" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="GRAVITY = 9.81&#10;CONVERSION_FACTOR = 2.54"></textarea>
+                  <label class="label">
+                    <span class="label-text-alt text-xs">One constant per line, e.g., NAME = value</span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <!-- Calculation Logic -->
+              <div class="space-y-3">
+                <h3 class="font-semibold text-lg">Calculation Logic</h3>
+                
+                <div class="alert alert-info text-xs py-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  <div id="availableVariables">
+                    <em class="text-gray-500">Add input parameters to see available variables</em>
+                  </div>
+                </div>
+
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Result <span class="text-error">*</span></span>
+                    <span class="label-text-alt text-xs">Main calculation result</span>
+                  </label>
+                  <textarea id="calcResult" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="weight / (height ** 2)" required></textarea>
+                  <label class="label">
+                    <span class="label-text-alt text-xs">Python expression that calculates the result</span>
+                  </label>
+                </div>
+
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Working <span class="text-error">*</span></span>
+                    <span class="label-text-alt text-xs">Show your calculation steps</span>
+                  </label>
+                  <textarea id="calcWorking" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI = weight / height² = [result]" required></textarea>
+                  <label class="label">
+                    <span class="label-text-alt text-xs">Use variable names and [result] placeholder. Example: BMI = weight / height² = [result]</span>
+                  </label>
+                </div>
+
+                <div class="form-control">
+                  <label class="label">
+                    <span class="label-text font-semibold">Interpretation <span class="text-error">*</span></span>
+                    <span class="label-text-alt text-xs">Clinical meaning of the result</span>
+                  </label>
+                  <textarea id="calcInterpretation" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI is [result] kg/m²" required></textarea>
+                  <label class="label">
+                    <span class="label-text-alt text-xs">Plain text with [result] placeholder. Example: BMI is [result] kg/m²</span>
+                  </label>
+                </div>
+              </div>
+            </form>
+
+            <div class="card-actions justify-end">
+              <button
+                id="generateBtn"
+                class="btn btn-outline btn-primary btn-lg"
+                onclick="generateCalculator()"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                Generate Calculator
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body gap-4">
+            <h2 class="card-title text-lg">Quick Reference</h2>
+            
+            <div class="space-y-3 text-sm">
+              <div>
+                <h4 class="font-semibold mb-2">Input Types</h4>
+                <ul class="space-y-1 ml-2">
+                  <li>• <code class="bg-base-200 px-1 rounded text-xs">number</code> - Numeric values</li>
+                  <li>• <code class="bg-base-200 px-1 rounded text-xs">string</code> - Text values</li>
+                  <li>• <code class="bg-base-200 px-1 rounded text-xs">boolean</code> - True/False</li>
+                  <li>• <code class="bg-base-200 px-1 rounded text-xs">date</code> - Date values</li>
+                </ul>
+              </div>
+
+              <div class="divider my-2"></div>
+
+              <div>
+                <h4 class="font-semibold mb-2">Logic Variables</h4>
+                <div class="space-y-2 text-xs">
+                  <div>
+                    <code class="bg-base-200 px-1 rounded">{variable_name}</code>
+                    <div class="text-gray-600 ml-2 mt-1">Use input variable names directly</div>
+                  </div>
+                  <div>
+                    <code class="bg-base-200 px-1 rounded">result</code>
+                    <div class="text-gray-600 ml-2 mt-1">Main result (required)</div>
+                  </div>
+                  <div>
+                    <code class="bg-base-200 px-1 rounded">working</code>
+                    <div class="text-gray-600 ml-2 mt-1">Show calculations (required)</div>
+                  </div>
+                  <div>
+                    <code class="bg-base-200 px-1 rounded">interpretation</code>
+                    <div class="text-gray-600 ml-2 mt-1">Clinical interpretation (required)</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="divider my-2"></div>
+
+              <div>
+                <h4 class="font-semibold mb-2">Example Logic</h4>
+                <pre class="bg-base-200 p-2 rounded text-xs overflow-x-auto"><code>Result: weight / (height ** 2)
+Working: BMI = weight / height² = [result]
+Interpretation: BMI is [result] kg/m²</code></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Output Panel -->
+        <div class="card bg-base-100 shadow-xl lg:col-span-2">
+          <div class="card-body gap-4">
+            <h2 class="card-title text-2xl">Output</h2>
+            
+            <!-- Loading state -->
+            <div id="loadingState" class="hidden">
+              <div class="flex items-center justify-center h-96">
+                <span class="loading loading-spinner loading-lg"></span>
+              </div>
+            </div>
+
+            <!-- Error state -->
+            <div id="errorState" class="hidden">
+              <div class="alert alert-error">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div>
+                  <h3 class="font-bold">Validation Errors</h3>
+                  <div id="errorList" class="text-sm mt-2"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Success state -->
+            <div id="successState" class="hidden">
+              <div class="alert alert-success mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <div>
+                  <h3 class="font-bold" id="successMessage">Calculator generated successfully!</h3>
+                </div>
+              </div>
+
+              <!-- Warnings -->
+              <div id="warningsState" class="hidden alert alert-warning mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                <div>
+                  <h3 class="font-bold">Warnings</h3>
+                  <div id="warningsList" class="text-sm mt-2"></div>
+                </div>
+              </div>
+
+              <!-- Tabs for code -->
+              <div role="tablist" class="tabs tabs-bordered mb-4">
+                <input type="radio" name="code_tabs" role="tab" class="tab" aria-label="Python Code" checked />
+                <div role="tabpanel" class="tab-content p-4">
+                  <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-semibold" id="calculatorName"></h3>
+                    <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('pythonCode')">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy
+                    </button>
+                  </div>
+                  <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto"><code id="pythonCode" class="text-sm"></code></pre>
+                </div>
+
+                <input type="radio" name="code_tabs" role="tab" class="tab" aria-label="Test Code" />
+                <div role="tabpanel" class="tab-content p-4">
+                  <div class="flex justify-between items-center mb-2">
+                    <h3 class="font-semibold" id="testName"></h3>
+                    <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('testCode')">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      Copy
+                    </button>
+                  </div>
+                  <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto"><code id="testCode" class="text-sm"></code></pre>
+                </div>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex gap-3 mb-4">
+                <button 
+                  class="btn btn-primary flex-1 btn-disabled"
+                  disabled
+                  id="enhanceTestsBtn"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  Enhance Tests with AI
+                  <span class="badge badge-warning badge-sm ml-2">Coming Soon</span>
+                </button>
+                
+                <button 
+                  class="btn btn-success flex-1"
+                  onclick="submitCalculator()"
+                  id="submitPRBtn"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Submit PR
+                </button>
+              </div>
+
+              <div class="alert">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-info shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div class="text-sm">
+                  <p class="font-semibold mb-2">Automated Workflow:</p>
+                  <ol class="list-decimal list-inside space-y-1">
+                    <li><strong>Submit PR</strong> - Automatically create branch, commit files, run tests, and create pull request</li>
+                  </ol>
+                  <div class="divider my-2"></div>
+                  <p class="font-semibold mb-2">Manual Workflow:</p>
+                  <ol class="list-decimal list-inside space-y-1">
+                    <li>Copy the generated <strong>Python code</strong> using the copy button above</li>
+                    <li>Create a new branch: <code class="bg-base-300 px-1 rounded text-xs">git checkout -b calculator/your-calculator-name</code></li>
+                    <li>Save to <code class="bg-base-300 px-1 rounded text-xs">calculators/your_calculator.py</code></li>
+                    <li>Copy the generated <strong>Test code</strong> and save to <code class="bg-base-300 px-1 rounded text-xs">tests/test_your_calculator.py</code></li>
+                    <li>Run tests: <code class="bg-base-300 px-1 rounded text-xs">pytest tests/test_your_calculator.py</code></li>
+                    <li>Commit and push: <code class="bg-base-300 px-1 rounded text-xs">git add . && git commit -m "Add calculator" && git push</code></li>
+                    <li>Create a pull request on GitHub</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+
+            <!-- Initial state -->
+            <div id="initialState" class="flex items-center justify-center h-96 text-base-content/50">
+              <div class="text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+                <p class="text-lg">Enter your specification and click Generate</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer p-10 bg-white border-t border-gray-200 text-gray-700">
+      <div class="container mx-auto">
+        <div class="flex flex-wrap items-center gap-6">
+          <div>
+            <p>Royal College of Paediatrics and Child Health</p>
+            <p class="text-sm">Copyright © 2025 - All rights reserved</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-4">
+            <a href="https://www.rcpch.ac.uk" target="_blank" class="link link-hover">About RCPCH</a>
+            <a href="docs.html" class="link link-hover flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+              </svg>
+              Documentation
+            </a>
+            <a href="https://github.com/rcpch/clinical-calculators" target="_blank" class="flex items-center gap-2">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+              </svg>
+              GitHub
+            </a>
+            <a href="https://github.com/rcpch/clinical-calculators/issues" target="_blank" class="link link-hover">Report an Issue</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module">
+      import API_CONFIG from './config.js';
+
+      window.API_CONFIG = API_CONFIG;
+
+      let inputCounter = 0;
+
+      window.generateVariableName = function(displayName) {
+        return displayName
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/^_+|_+$/g, '')
+          .replace(/_+/g, '_');
+      }
+
+      window.updateVariablesDisplay = function() {
+        const inputDivs = document.querySelectorAll('#inputsList > div');
+        const variables = [];
+        
+        inputDivs.forEach(div => {
+          const varName = div.querySelector('[name="inputVarName"]').value.trim();
+          if (varName) {
+            variables.push(varName);
+          }
+        });
+
+        const displayEl = document.getElementById('availableVariables');
+        if (variables.length > 0) {
+          displayEl.innerHTML = '<strong>Available:</strong> ' + variables.map(v => `<code class="bg-base-200 px-1 rounded text-xs">${v}</code>`).join(', ');
+        } else {
+          displayEl.innerHTML = '<em class="text-gray-500">Add input parameters to see available variables</em>';
+        }
+      }
+
+      window.addInput = function() {
+        const inputsList = document.getElementById('inputsList');
+        const inputId = `input_${inputCounter++}`;
+        
+        const inputDiv = document.createElement('div');
+        inputDiv.className = 'card bg-base-200 p-4';
+        inputDiv.id = inputId;
+        inputDiv.innerHTML = `
+          <div class="flex justify-between items-start mb-3">
+            <h4 class="font-semibold">Input Parameter</h4>
+            <button type="button" class="btn btn-xs btn-ghost btn-circle" onclick="removeInput('${inputId}')">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text text-xs">Display Name <span class="text-error">*</span></span>
+              </label>
+              <input type="text" class="input input-sm input-bordered" name="inputDisplayName" placeholder="e.g., Weight in Kilograms" required 
+                onkeyup="const varInput = this.closest('.card').querySelector('[name=\\'inputVarName\\']'); varInput.value = generateVariableName(this.value); updateVariablesDisplay();" />
+            </div>
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text text-xs">Variable Name <span class="text-error">*</span></span>
+              </label>
+              <input type="text" class="input input-sm input-bordered font-mono" name="inputVarName" placeholder="weight_in_kilograms" required 
+                onkeyup="updateVariablesDisplay();" />
+            </div>
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text text-xs">Type <span class="text-error">*</span></span>
+              </label>
+              <select class="select select-sm select-bordered" name="inputType" required>
+                <option value="number">number</option>
+                <option value="string">string</option>
+                <option value="boolean">boolean</option>
+                <option value="date">date</option>
+              </select>
+            </div>
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text text-xs">Unit</span>
+              </label>
+              <input type="text" class="input input-sm input-bordered" name="inputUnit" placeholder="e.g., kg, cm" />
+            </div>
+            <div class="form-control md:col-span-2">
+              <label class="label py-1">
+                <span class="label-text text-xs">Description <span class="text-error">*</span></span>
+              </label>
+              <textarea class="textarea textarea-sm textarea-bordered" name="inputDescription" placeholder="Describe this input parameter" rows="2" required></textarea>
+            </div>
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text text-xs">Min Value</span>
+              </label>
+              <input type="number" class="input input-sm input-bordered" name="inputMin" placeholder="0" />
+            </div>
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text text-xs">Max Value</span>
+              </label>
+              <input type="number" class="input input-sm input-bordered" name="inputMax" placeholder="100" />
+            </div>
+            <div class="form-control">
+              <label class="label py-1">
+                <span class="label-text text-xs">Required</span>
+              </label>
+              <input type="checkbox" class="checkbox checkbox-primary" name="inputRequired" checked />
+            </div>
+          </div>
+        `;
+        
+        inputsList.appendChild(inputDiv);
+        updateVariablesDisplay();
+      };
+
+      window.removeInput = function(inputId) {
+        document.getElementById(inputId).remove();
+        updateVariablesDisplay();
+      };
+
+      window.loadExample = function() {
+        document.getElementById('calcDescription').value = 'Calculate Body Mass Index from height and weight';
+        document.getElementById('calcName').value = 'calculate_body_mass_index_from_height_and_weight';
+        document.getElementById('calcReference').value = 'WHO BMI Guidelines';
+        document.getElementById('calcConstants').value = '';
+        document.getElementById('calcResult').value = "weight / (height ** 2)";
+        document.getElementById('calcWorking').value = "BMI = weight / height² = [result]";
+        document.getElementById('calcInterpretation').value = "BMI is [result] kg/m²";
+        
+        // Clear existing inputs
+        document.getElementById('inputsList').innerHTML = '';
+        inputCounter = 0;
+        
+        // Add example inputs
+        addInput();
+        const inputs = document.querySelectorAll('#inputsList > div');
+        const weightInput = inputs[0];
+        weightInput.querySelector('[name="inputDisplayName"]').value = 'Weight';
+        weightInput.querySelector('[name="inputVarName"]').value = 'weight';
+        weightInput.querySelector('[name="inputType"]').value = 'number';
+        weightInput.querySelector('[name="inputDescription"]').value = 'Weight in kilograms';
+        weightInput.querySelector('[name="inputUnit"]').value = 'kg';
+        weightInput.querySelector('[name="inputMin"]').value = '1';
+        weightInput.querySelector('[name="inputMax"]').value = '500';
+        
+        addInput();
+        const heightInput = document.querySelectorAll('#inputsList > div')[1];
+        heightInput.querySelector('[name="inputDisplayName"]').value = 'Height';
+        heightInput.querySelector('[name="inputVarName"]').value = 'height';
+        heightInput.querySelector('[name="inputType"]').value = 'number';
+        heightInput.querySelector('[name="inputDescription"]').value = 'Height in meters';
+        heightInput.querySelector('[name="inputUnit"]').value = 'm';
+        heightInput.querySelector('[name="inputMin"]').value = '0.5';
+        heightInput.querySelector('[name="inputMax"]').value = '3.0';
+        
+        updateVariablesDisplay();
+      };
+
+      window.clearForm = function() {
+        document.getElementById('calculatorForm').reset();
+        document.getElementById('inputsList').innerHTML = '';
+        inputCounter = 0;
+      };
+
+      window.copyToClipboard = function(elementId) {
+        const code = document.getElementById(elementId).textContent;
+        navigator.clipboard.writeText(code).then(() => {
+          // Show toast or notification
+          alert('Code copied to clipboard!');
+        });
+      };
+
+      function buildTOMLSpec() {
+        const name = document.getElementById('calcName').value.trim();
+        const description = document.getElementById('calcDescription').value.trim();
+        const reference = document.getElementById('calcReference').value.trim();
+        const constants = document.getElementById('calcConstants').value.trim();
+        const result = document.getElementById('calcResult').value.trim().replace(/\n/g, ' ');
+        const working = document.getElementById('calcWorking').value.trim().replace(/\n/g, ' ');
+        const interpretation = document.getElementById('calcInterpretation').value.trim().replace(/\n/g, ' ');
+        
+        if (!name || !description || !reference || !result || !working || !interpretation) {
+          alert('Please fill in all required calculator fields');
+          return null;
+        }
+
+        // Convert working and interpretation to f-strings only if they contain [result] placeholder
+        const workingHasPlaceholder = working.includes('[result]');
+        const workingFString = workingHasPlaceholder 
+          ? `f'${working.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`
+          : `'${working.replace(/'/g, "\\'")}'`;
+        
+        const interpretationHasPlaceholder = interpretation.includes('[result]');
+        const interpretationFString = interpretationHasPlaceholder
+          ? `f'${interpretation.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`
+          : `'${interpretation.replace(/'/g, "\\'")}'`;
+        
+        // Build logic from constants and the three parts
+        let logic = '';
+        if (constants) {
+          const constantLines = constants.split('\n').filter(line => line.trim());
+          logic += constantLines.join('; ') + '; ';
+        }
+        logic += `result = ${result}; `;
+        logic += `working = ${workingFString}; `;
+        logic += `interpretation = ${interpretationFString}`;
+
+        let toml = `[calculator]\n`;
+        toml += `name = "${name}"\n`;
+        toml += `description = "${description}"\n`;
+        toml += `reference = "${reference}"\n`;
+        toml += `logic = "${logic.replace(/"/g, '\\"')}"\n\n`;
+
+        const inputDivs = document.querySelectorAll('#inputsList > div');
+        if (inputDivs.length === 0) {
+          alert('Please add at least one input parameter');
+          return null;
+        }
+
+        inputDivs.forEach(div => {
+          const varName = div.querySelector('[name="inputVarName"]').value.trim();
+          const type = div.querySelector('[name="inputType"]').value;
+          const description = div.querySelector('[name="inputDescription"]').value.trim().replace(/\n/g, ' ');
+          const unit = div.querySelector('[name="inputUnit"]').value.trim();
+          const required = div.querySelector('[name="inputRequired"]').checked;
+          const min = div.querySelector('[name="inputMin"]').value.trim();
+          const max = div.querySelector('[name="inputMax"]').value.trim();
+
+          if (!varName || !description) {
+            alert('Please fill in variable name and description for all inputs');
+            return null;
+          }
+
+          toml += `[[inputs]]\n`;
+          toml += `name = "${varName}"\n`;
+          toml += `type = "${type}"\n`;
+          toml += `description = "${description}"\n`;
+          toml += `required = ${required}\n`;
+          if (unit) toml += `unit = "${unit}"\n`;
+          if (min) toml += `min = ${min}\n`;
+          if (max) toml += `max = ${max}\n`;
+          toml += `\n`;
+        });
+
+        return toml;
+      }
+
+      window.generateCalculator = async function() {
+        const spec = buildTOMLSpec();
+        
+        if (!spec) {
+          return;
+        }
+
+        // Show loading
+        document.getElementById('initialState').classList.add('hidden');
+        document.getElementById('successState').classList.add('hidden');
+        document.getElementById('errorState').classList.add('hidden');
+        document.getElementById('loadingState').classList.remove('hidden');
+
+        try {
+          const response = await fetch(`${API_CONFIG.baseUrl}/generate-calculator`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ spec }),
+          });
+
+          const data = await response.json();
+
+          // Hide loading
+          document.getElementById('loadingState').classList.add('hidden');
+
+          if (response.ok) {
+            // Show success
+            document.getElementById('successMessage').textContent = data.message;
+            document.getElementById('calculatorName').textContent = `calculators/${data.name}.py`;
+            document.getElementById('testName').textContent = `tests/test_${data.name}.py`;
+            document.getElementById('pythonCode').textContent = data.python_code;
+            document.getElementById('testCode').textContent = data.test_code;
+
+            // Show warnings if any
+            const warnings = data.validation_errors.filter(e => e.severity === 'warning');
+            if (warnings.length > 0) {
+              document.getElementById('warningsState').classList.remove('hidden');
+              document.getElementById('warningsList').innerHTML = warnings
+                .map(e => `<div class="mt-1"><strong>${e.field}:</strong> ${e.message}</div>`)
+                .join('');
+            } else {
+              document.getElementById('warningsState').classList.add('hidden');
+            }
+
+            document.getElementById('successState').classList.remove('hidden');
+          } else {
+            // Show errors
+            const errors = data.detail.validation_errors || [];
+            document.getElementById('errorList').innerHTML = errors
+              .map(e => `<div class="mt-1"><strong>${e.field}:</strong> ${e.message}</div>`)
+              .join('');
+            document.getElementById('errorState').classList.remove('hidden');
+          }
+        } catch (error) {
+          document.getElementById('loadingState').classList.add('hidden');
+          document.getElementById('errorList').innerHTML = `<div>Network error: ${error.message}</div>`;
+          document.getElementById('errorState').classList.remove('hidden');
+        }
+      };
+
+      // Store generated data for later use
+      let generatedData = null;
+
+      // Update generateCalculator to store data
+      const originalGenerateCalculator = window.generateCalculator;
+      window.generateCalculator = async function() {
+        await originalGenerateCalculator();
+        
+        // Store the generated data
+        const spec = buildTOMLSpec();
+        const pythonCode = document.getElementById('pythonCode').textContent;
+        const testCode = document.getElementById('testCode').textContent;
+        const name = document.getElementById('calcName').value;
+        const description = document.getElementById('calcDescription').value;
+        
+        // Get optional submitter information
+        const submitterGithub = document.getElementById('submitterGithub').value.trim();
+        const submitterName = document.getElementById('submitterName').value.trim();
+        const submitterAffiliation = document.getElementById('submitterAffiliation').value.trim();
+        
+        generatedData = {
+          spec: spec, // Send as TOML string
+          calculator_code: pythonCode,
+          test_code: testCode,
+          name: name,
+          description: description,
+          submitter_github: submitterGithub || null,
+          submitter_name: submitterName || null,
+          submitter_affiliation: submitterAffiliation || null,
+        };
+      };
+
+      window.enhanceTests = async function() {
+        if (!generatedData) {
+          alert('Please generate a calculator first');
+          return;
+        }
+
+        const btn = document.getElementById('enhanceTestsBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading loading-spinner"></span>Enhancing...';
+
+        try {
+          const response = await fetch(`${API_CONFIG.baseUrl}/generate-enhanced-tests`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              spec: generatedData.spec,
+              calculator_code: generatedData.calculator_code,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            // Update test code with enhanced version
+            document.getElementById('testCode').textContent = data.test_code;
+            generatedData.test_code = data.test_code;
+            
+            // Switch to test tab
+            document.querySelectorAll('input[name="code_tabs"]')[1].checked = true;
+            
+            alert('✅ Tests enhanced with AI-generated test cases!');
+          } else {
+            alert(`Error: ${data.detail}`);
+          }
+        } catch (error) {
+          alert(`Network error: ${error.message}`);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>Enhance Tests with AI';
+        }
+      };
+
+      window.submitCalculator = async function() {
+        if (!generatedData) {
+          alert('Please generate a calculator first');
+          return;
+        }
+
+        const confirmed = confirm(
+          'This will:\n' +
+          '1. Create a new branch\n' +
+          '2. Add calculator and test files\n' +
+          '3. Run tests\n' +
+          '4. Create a pull request\n\n' +
+          'Continue?'
+        );
+
+        if (!confirmed) return;
+
+        const btn = document.getElementById('submitPRBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading loading-spinner"></span>Submitting...';
+
+        try {
+          const response = await fetch(`${API_CONFIG.baseUrl}/submit-calculator`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(generatedData),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            alert(
+              `✅ Success!\n\n` +
+              `Branch: ${data.branch}\n` +
+              `PR: ${data.pr_url}\n\n` +
+              `Test Results:\n${data.test_results}`
+            );
+            
+            // Open PR in new tab
+            if (data.pr_url) {
+              window.open(data.pr_url, '_blank');
+            }
+          } else {
+            alert(`Error: ${data.detail}`);
+          }
+        } catch (error) {
+          alert(`Network error: ${error.message}`);
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>Submit PR';
+        }
+      };
+    </script>
+  </body>
+</html>

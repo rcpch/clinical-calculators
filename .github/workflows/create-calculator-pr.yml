@@ -1,0 +1,151 @@
+name: Create Calculator PR
+
+on:
+  workflow_dispatch:
+    inputs:
+      calculator_name:
+        description: 'Calculator name (snake_case)'
+        required: true
+        type: string
+      calculator_code:
+        description: 'Python calculator code'
+        required: true
+        type: string
+      test_code:
+        description: 'Python test code'
+        required: true
+        type: string
+      spec:
+        description: 'TOML specification'
+        required: true
+        type: string
+      description:
+        description: 'Calculator description'
+        required: true
+        type: string
+      submitter_github:
+        description: 'GitHub username of submitter'
+        required: false
+        type: string
+      submitter_name:
+        description: 'Name of submitter'
+        required: false
+        type: string
+      submitter_affiliation:
+        description: 'Affiliation of submitter'
+        required: false
+        type: string
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: live
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pydantic fastapi
+      
+      - name: Create branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b calculator/${{ inputs.calculator_name }}
+      
+      - name: Write calculator file
+        run: |
+          echo "${{ inputs.calculator_code }}" > calculators/${{ inputs.calculator_name }}.py
+      
+      - name: Write test file
+        run: |
+          echo "${{ inputs.test_code }}" > tests/test_${{ inputs.calculator_name }}.py
+      
+      - name: Run tests
+        id: test
+        run: |
+          pytest tests/test_${{ inputs.calculator_name }}.py -v > test_results.txt 2>&1 || true
+          echo "test_output<<EOF" >> $GITHUB_OUTPUT
+          cat test_results.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Commit files
+        run: |
+          git add calculators/${{ inputs.calculator_name }}.py tests/test_${{ inputs.calculator_name }}.py
+          git commit -m "Add ${{ inputs.calculator_name }} calculator
+
+Generated via calculator generator tool
+
+Description: ${{ inputs.description }}"
+      
+      - name: Push branch
+        run: |
+          git push origin calculator/${{ inputs.calculator_name }}
+      
+      - name: Build PR body
+        id: pr_body
+        run: |
+          BODY="## New Calculator: ${{ inputs.description }}
+
+### Files Added
+- \`calculators/${{ inputs.calculator_name }}.py\`
+- \`tests/test_${{ inputs.calculator_name }}.py\`
+
+### Specification
+\`\`\`toml
+${{ inputs.spec }}
+\`\`\`
+
+### Test Results
+\`\`\`
+${{ steps.test.outputs.test_output }}
+\`\`\`
+"
+          
+          if [ -n "${{ inputs.submitter_github }}" ]; then
+            BODY="${BODY}
+
+### Submitted By
+GitHub: @${{ inputs.submitter_github }}"
+          elif [ -n "${{ inputs.submitter_name }}" ]; then
+            BODY="${BODY}
+
+### Submitted By
+Name: ${{ inputs.submitter_name }}"
+            if [ -n "${{ inputs.submitter_affiliation }}" ]; then
+              BODY="${BODY}
+Affiliation: ${{ inputs.submitter_affiliation }}"
+            fi
+          fi
+          
+          BODY="${BODY}
+
+---
+*Generated automatically via the [Calculator Generator](https://api.rcpch.ac.uk/clinical-calculators/generator.html)*"
+          
+          echo "body<<EOF" >> $GITHUB_OUTPUT
+          echo "$BODY" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: calculator/${{ inputs.calculator_name }}
+          title: "Add ${{ inputs.calculator_name }} calculator"
+          body: ${{ steps.pr_body.outputs.body }}
+          base: live
+          labels: calculator,auto-generated
