@@ -105,13 +105,15 @@ async def custom_redoc_html(request: Request) -> HTMLResponse:
 def health():
     """Health check endpoint with feature flags."""
     import os
-    
+
     return {
         "status": "ok",
         "features": {
             "pr_submission": bool(os.getenv("GITHUB_TOKEN")),
-            "ollama": bool(os.getenv("OLLAMA_ENABLED", "").lower() in ("true", "1", "yes")),
-        }
+            "ollama": bool(
+                os.getenv("OLLAMA_ENABLED", "").lower() in ("true", "1", "yes")
+            ),
+        },
     }
 
 

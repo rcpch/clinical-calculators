@@ -77,10 +77,10 @@ class GitHubPRService:
                 inputs["submitter_name"] = str(submitter_name).strip()
             if submitter_affiliation:
                 inputs["submitter_affiliation"] = str(submitter_affiliation).strip()
-            
+
             # Validate input sizes (GitHub Actions limit is 65535 bytes per input)
             for key, value in inputs.items():
-                if len(value.encode('utf-8')) > 65535:
+                if len(value.encode("utf-8")) > 65535:
                     raise PRSubmissionError(
                         f"Input '{key}' exceeds GitHub Actions size limit of 65535 bytes"
                     )
@@ -119,7 +119,7 @@ class GitHubPRService:
                         error_msg = error_data.get("message", response.text)
                     except Exception:
                         error_msg = response.text[:200]  # Limit error message length
-                    
+
                     raise PRSubmissionError(
                         f"GitHub API error (status {response.status_code}): {error_msg}"
                     )
