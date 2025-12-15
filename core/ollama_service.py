@@ -16,6 +16,7 @@ class OllamaService:
     def __init__(self):
         self.base_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
         self.model = os.getenv("OLLAMA_MODEL", "llama2")
+        self.api_key = os.getenv("OLLAMA_API_KEY")  # Optional API key
         self.timeout = 120.0  # Longer timeout for test generation
 
     async def generate_tests(
@@ -35,6 +36,11 @@ class OllamaService:
         """
         prompt = self._build_test_generation_prompt(calculator_spec, generated_code)
 
+        # Build headers with optional API key
+        headers = {}
+        if self.api_key:
+            headers["Authorization"] = f"Bearer {self.api_key}"
+
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.post(
                 f"{self.base_url}/api/generate",
@@ -43,6 +49,7 @@ class OllamaService:
                     "prompt": prompt,
                     "stream": False,
                 },
+                headers=headers,
             )
             response.raise_for_status()
             result = response.json()

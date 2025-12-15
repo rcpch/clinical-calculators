@@ -12,6 +12,7 @@ Welcome to the RCPCH Clinical Calculators documentation.
 - [Development Guide](development.md) - How to develop locally
 - [Contributing Guide](../CONTRIBUTING.md) - How to contribute to the project
 - [Calculator Specifications](calculator-specs.md) - How to create calculators
+- [Calculator Generator](calculator-generator.md) - Automated calculator creation with AI-enhanced tests and PR submission
 - [API Reference](api-reference.md) - Complete API documentation
 
 ## Maintenance
