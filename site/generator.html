@@ -336,12 +336,22 @@ Interpretation: BMI is [result] kg/m²</code></pre>
               <div class="alert">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-info shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 <div class="text-sm">
-                  <p class="font-semibold">Automated Workflow:</p>
-                  <ol class="list-decimal list-inside mt-2 space-y-1">
-                    <li><strong>Enhance Tests with AI</strong> - Use Ollama to generate comprehensive test cases</li>
+                  <p class="font-semibold mb-2">Automated Workflow:</p>
+                  <ol class="list-decimal list-inside space-y-1">
+                    <li><strong>Enhance Tests with AI</strong> (optional) - Use Ollama to generate comprehensive test cases</li>
                     <li><strong>Submit PR</strong> - Automatically create branch, commit files, run tests, and create pull request</li>
                   </ol>
-                  <p class="mt-2 text-xs text-gray-600">Or manually: Download code → Add to repo → Run pytest → Create PR</p>
+                  <div class="divider my-2"></div>
+                  <p class="font-semibold mb-2">Manual Workflow:</p>
+                  <ol class="list-decimal list-inside space-y-1">
+                    <li>Copy the generated <strong>Python code</strong> using the copy button above</li>
+                    <li>Create a new branch: <code class="bg-base-300 px-1 rounded text-xs">git checkout -b calculator/your-calculator-name</code></li>
+                    <li>Save to <code class="bg-base-300 px-1 rounded text-xs">calculators/your_calculator.py</code></li>
+                    <li>Copy the generated <strong>Test code</strong> and save to <code class="bg-base-300 px-1 rounded text-xs">tests/test_your_calculator.py</code></li>
+                    <li>Run tests: <code class="bg-base-300 px-1 rounded text-xs">pytest tests/test_your_calculator.py</code></li>
+                    <li>Commit and push: <code class="bg-base-300 px-1 rounded text-xs">git add . && git commit -m "Add calculator" && git push</code></li>
+                    <li>Create a pull request on GitHub</li>
+                  </ol>
                 </div>
               </div>
             </div>

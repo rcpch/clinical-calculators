@@ -49,10 +49,12 @@
           <p class="text-gray-600">Select a calculator to get started (<span id="calculator-count">-</span> available)</p>
         </div>
         
-        <div id="calculator-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Calculators will be loaded here -->
-          <div class="col-span-full flex justify-center p-8">
-            <span class="loading loading-spinner loading-lg text-primary"></span>
+        <div class="bg-base-100 rounded-lg shadow-xl overflow-hidden">
+          <div id="calculator-list" class="divide-y divide-gray-200">
+            <!-- Calculators will be loaded here -->
+            <div class="flex justify-center p-8">
+              <span class="loading loading-spinner loading-lg text-primary"></span>
+            </div>
           </div>
         </div>
 

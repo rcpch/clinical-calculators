@@ -120,18 +120,17 @@ function renderCalculatorList() {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(
       ([name, title]) => `
-      <div class="card bg-base-100 shadow hover:shadow-lg transition-shadow cursor-pointer border border-gray-200 hover:border-rcpch-bright-blue"
-           onclick="selectCalculator('${name}')">
-        <div class="card-body p-6">
-          <h3 class="card-title text-lg text-rcpch-dark-blue mb-3">${stripMarkdown(
+      <div class="flex items-center justify-between p-4 hover:bg-base-200 transition-colors group">
+        <div class="flex-1 min-w-0 mr-4">
+          <h3 class="text-lg font-semibold text-rcpch-dark-blue mb-1 group-hover:text-rcpch-bright-blue">${stripMarkdown(
             title
           )}</h3>
-          <div class="mb-4">
-            <span class="badge badge-outline badge-sm text-xs">api.rcpch.ac.uk/clinical-calculators/${name}</span>
-          </div>
-          <div class="card-actions justify-end mt-2">
-            <button class="btn btn-sm btn-primary">Use Calculator</button>
-          </div>
+          <p class="text-sm text-gray-500 font-mono truncate">api.rcpch.ac.uk/clinical-calculators/${name}</p>
+        </div>
+        <div class="flex-shrink-0">
+          <button class="btn btn-sm btn-primary" onclick="selectCalculator('${name}')">
+            Use Calculator
+          </button>
         </div>
       </div>
     `
