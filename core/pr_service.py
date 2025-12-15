@@ -85,8 +85,8 @@ class GitHubPRService:
                         f"Input '{key}' exceeds GitHub Actions size limit of 65535 bytes"
                     )
 
-            # Trigger GitHub Actions workflow
-            url = f"{self.api_base}/repos/{self.repo_owner}/{self.repo_name}/actions/workflows/create-calculator-pr.yml/dispatches"
+            # Trigger GitHub Actions workflow (using workflow ID for reliability)
+            url = f"{self.api_base}/repos/{self.repo_owner}/{self.repo_name}/actions/workflows/215976765/dispatches"
 
             headers = {
                 "Authorization": f"Bearer {self.github_token}",
