@@ -186,7 +186,7 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
     imports = [
         "from __future__ import annotations",
         "",
-        "from pydantic import Field, field_validator",
+        "from pydantic import Field",
         "",
         "from core.metadata import build_metadata",
         "from core.request.request import CalculatorRequest",
@@ -256,12 +256,22 @@ def generate_calculator_code(spec: dict[str, Any]) -> str:
         f'    """Calculate {name.replace("_", " ")}."""',
         f"    request = {class_name}(**params)",
         "",
-        "    # Calculation logic",
+        "    # Extract input values",
     ]
     
+    # Extract variables from request for direct use in logic
+    for inp in inputs:
+        field_name = inp["name"]
+        calculate_func.append(f"    {field_name} = request.{field_name}")
+    
+    calculate_func.append("")
+    calculate_func.append("    # Calculation logic")
+    
     # Add user's logic (properly indented)
-    for line in logic.split("\n"):
-        calculate_func.append(f"    {line}" if line.strip() else "")
+    # Logic comes as semicolon-separated statements from TOML
+    logic_statements = [stmt.strip() for stmt in logic.split(";") if stmt.strip()]
+    for stmt in logic_statements:
+        calculate_func.append(f"    {stmt}")
     
     # Build response
     calculate_func.extend([

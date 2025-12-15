@@ -540,16 +540,16 @@ Interpretation: BMI is [result] kg/m²</code></pre>
         const description = document.getElementById('calcDescription').value.trim();
         const reference = document.getElementById('calcReference').value.trim();
         const constants = document.getElementById('calcConstants').value.trim();
-        const result = document.getElementById('calcResult').value.trim();
-        const working = document.getElementById('calcWorking').value.trim();
-        const interpretation = document.getElementById('calcInterpretation').value.trim();
+        const result = document.getElementById('calcResult').value.trim().replace(/\n/g, ' ');
+        const working = document.getElementById('calcWorking').value.trim().replace(/\n/g, ' ');
+        const interpretation = document.getElementById('calcInterpretation').value.trim().replace(/\n/g, ' ');
         
         if (!name || !description || !reference || !result || !working || !interpretation) {
           alert('Please fill in all required calculator fields');
           return null;
         }
 
-        // Convert working and interpretation to f-strings
+        // Convert working and interpretation to f-strings, escaping quotes and newlines
         const workingFString = `f'${working.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`;
         const interpretationFString = `f'${interpretation.replace(/\[result\]/g, '{result:.2f}').replace(/'/g, "\\'")}'`;
         
