@@ -1,12 +1,41 @@
-# Calculator Generator - Automated Workflow
+# Calculator Generator
 
-This feature provides an automated workflow for creating clinical calculators with AI-enhanced tests and automatic PR submission.
+The calculator generator provides a web-based interface for creating new clinical calculators without writing code directly. It automates the entire process from specification to pull request.
+
+## Overview
+
+The generator allows contributors to:
+- Define calculator specifications using a simple form
+- Automatically generate Python code and tests
+- Submit pull requests with one click via GitHub Actions
+- Optionally enhance tests with AI
+- Include attribution information
+
+## Quick Start
+
+1. **Open the Generator:** Navigate to `/site/generator.html`
+2. **Fill in the Form:** Provide calculator details, inputs, and logic
+3. **Generate Code:** Click "Generate Calculator" to create Python code and tests
+4. **Submit PR:** Click "Submit PR" to automatically create a pull request
 
 ## Features
 
-1. **Web-Based Calculator Generator** - User-friendly form interface
-2. **AI-Enhanced Test Generation** - Uses Ollama to generate comprehensive tests
-3. **Automated PR Submission** - One-click branch creation, testing, and PR
+1. **Web-Based Interface** - No coding required, form-based calculator creation
+2. **Automatic Code Generation** - Generates production-ready Python code and tests
+3. **GitHub Actions Integration** - One-click PR creation via workflow automation
+4. **User Attribution** - Optional GitHub username or name/affiliation fields
+5. **AI Test Enhancement** - Coming soon: AI-generated comprehensive test cases
+
+## How It Works
+
+1. User fills in calculator specification form
+2. Generator validates input and creates Python code
+3. User clicks "Submit PR"
+4. API triggers GitHub Actions workflow
+5. Workflow creates branch, commits files, runs tests, and creates PR
+6. PR appears in repository for review
+
+For detailed workflow documentation, see [PR Automation Workflow](pr-automation-workflow.md).
 
 ## Setup
 
