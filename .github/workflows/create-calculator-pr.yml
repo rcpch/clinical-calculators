@@ -5,35 +5,35 @@ on:
   workflow_dispatch:
     inputs:
       calculator_name:
-        description: 'Calculator name (snake_case)'
+        description: "Calculator name (snake_case)"
         required: true
         type: string
       calculator_code:
-        description: 'Python calculator code'
+        description: "Python calculator code"
         required: true
         type: string
       test_code:
-        description: 'Python test code'
+        description: "Python test code"
         required: true
         type: string
       spec:
-        description: 'TOML specification'
+        description: "TOML specification"
         required: true
         type: string
       description:
-        description: 'Calculator description'
+        description: "Calculator description"
         required: true
         type: string
       submitter_github:
-        description: 'GitHub username of submitter'
+        description: "GitHub username of submitter"
         required: false
         type: string
       submitter_name:
-        description: 'Name of submitter'
+        description: "Name of submitter"
         required: false
         type: string
       submitter_affiliation:
-        description: 'Affiliation of submitter'
+        description: "Affiliation of submitter"
         required: false
         type: string
 
@@ -43,38 +43,38 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: live
           fetch-depth: 0
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
+          python-version: "3.11"
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pytest pydantic fastapi
-      
+
       - name: Create branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b calculator/${{ inputs.calculator_name }}
-      
+
       - name: Write calculator file
         run: |
           echo "${{ inputs.calculator_code }}" > calculators/${{ inputs.calculator_name }}.py
-      
+
       - name: Write test file
         run: |
           echo "${{ inputs.test_code }}" > tests/test_${{ inputs.calculator_name }}.py
-      
+
       - name: Run tests
         id: test
         run: |
@@ -82,18 +82,18 @@ jobs:
           echo "test_output<<EOF" >> $GITHUB_OUTPUT
           cat test_results.txt >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
-      
+
       - name: Commit files
         run: |
           git add calculators/${{ inputs.calculator_name }}.py tests/test_${{ inputs.calculator_name }}.py
           git commit -m "Add ${{ inputs.calculator_name }} calculator" \
             -m "Generated via calculator generator tool" \
             -m "Description: ${{ inputs.description }}"
-      
+
       - name: Push branch
         run: |
           git push origin calculator/${{ inputs.calculator_name }}
-      
+
       - name: Build PR body
         id: pr_body
         run: |
@@ -131,14 +131,15 @@ jobs:
             echo "*Generated automatically via the [Calculator Generator](https://api.rcpch.ac.uk/clinical-calculators/generator.html)*"
             echo "EOFPR"
           } >> $GITHUB_OUTPUT
-      
+
       - name: Create Pull Request
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ steps.pr_body.outputs.body }}
         run: |
           gh pr create \
             --base live \
             --head calculator/${{ inputs.calculator_name }} \
             --title "Add ${{ inputs.calculator_name }} calculator" \
-            --body "${{ steps.pr_body.outputs.body }}" \
-            --label calculator,auto-generated
+            --body "$PR_BODY" \
+            --label "calculator,auto-generated"
