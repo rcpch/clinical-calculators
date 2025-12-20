@@ -7,14 +7,13 @@ import markdown as md
 
 # Third-party imports
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import (
     get_redoc_html,
     get_swagger_ui_html,
     get_swagger_ui_oauth2_redirect_html,
 )
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -544,15 +543,15 @@ async def submit_calculator(
 async def chat_calculator(request: Request, data: dict[str, Any]):
     """
     Chat endpoint for guided calculator creation.
-    
+
     Rate limited to 10 requests per minute per IP.
-    
+
     Request body:
         {
             "message": str,  # User's message
             "history": [{"role": "user"|"assistant", "content": str}]  # Conversation history
         }
-    
+
     Response:
         {
             "response": str,  # Assistant's response
@@ -581,22 +580,22 @@ async def chat_calculator(request: Request, data: dict[str, Any]):
             status_code=500,
             detail=f"Chat error: {str(e)}",
         ) from e
-    
+
 
 @app.post("/chat/calculator/stream")
 @limiter.limit("10/minute")
 async def chat_calculator_stream(request: Request, data: dict[str, Any]):
     """
     Streaming chat endpoint for guided calculator creation.
-    
+
     Returns Server-Sent Events (SSE) format responses.
-    
+
     Request body:
         {
             "message": str,
             "history": [{"role": "user"|"assistant", "content": str}]
         }
-    
+
     Response: Stream of JSON objects
         {"token": str}  # Individual tokens
         {"done": true, "toml_spec": str | null}  # Completion marker
