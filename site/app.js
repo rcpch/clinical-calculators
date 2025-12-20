@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadCalculators();
   renderCalculatorList();
   updateCalculatorCount();
+  // Hide output card on load (by id)
+  const outputCard = document.getElementById("output-card");
+  if (outputCard) outputCard.classList.add("hidden");
 });
 
 // Navigation functions
@@ -399,6 +402,15 @@ async function handleSubmit(e) {
 
 // Display calculation result
 function displayResult(result) {
+
+  // Show output card, hide manual/AI entry cards
+  const outputCard = document.getElementById("output-card");
+  if (outputCard) outputCard.classList.remove("hidden");
+  const manualPanel = document.getElementById("manual-form-panel");
+  const aiPanel = document.getElementById("ai-assistant-panel");
+  if (manualPanel) manualPanel.classList.add("hidden");
+  if (aiPanel) aiPanel.classList.add("hidden");
+
   const container = document.getElementById("result-container");
   container.classList.remove("hidden");
 
@@ -464,6 +476,28 @@ function displayResult(result) {
   // Scroll to result
   container.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
+
+// Reset output and show entry cards again
+window.resetOutput = function () {
+  // Hide output card
+  const outputCard = document.getElementById("output-card");
+  if (outputCard) outputCard.classList.add("hidden");
+  // Show manual/AI entry cards
+  const manualPanel = document.getElementById("manual-form-panel");
+  const aiPanel = document.getElementById("ai-assistant-panel");
+  if (manualPanel) manualPanel.classList.remove("hidden");
+  if (aiPanel) aiPanel.classList.remove("hidden");
+  // Optionally clear output content
+  const container = document.getElementById("result-container");
+  if (container) container.innerHTML = "";
+  // Optionally clear manual form fields (reset form)
+  const form = document.getElementById("calculatorForm");
+  if (form) form.reset();
+  // Optionally clear AI chat
+  const chat = document.getElementById("chatMessages");
+  if (chat) chat.innerHTML = "";
+};
+};
 
 function formatLabel(key) {
   return key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());

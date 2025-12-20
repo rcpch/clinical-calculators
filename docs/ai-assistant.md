@@ -17,6 +17,7 @@ The Clinical Calculators project includes an AI-powered assistant that helps use
 ### The AI Assistant Tab
 
 In the calculator generator interface, users can:
+
 - Switch between **Manual Form** (traditional form-based input) and **AI Assistant** tabs
 - Have a natural language conversation with the LLM
 - Ask questions about calculator requirements
@@ -63,21 +64,25 @@ You can read the complete prompt [here](llm-system-prompt.md).
 The AI assistant has multiple layers of protection:
 
 ### Input Protection
+
 - Messages limited to 1000 characters
 - Conversations capped at 30 turns (15 exchanges)
 - Rate limited to 10 requests/minute per IP
 
 ### Scope Constraint
+
 - Keyword filtering detects off-topic queries
 - System prompt enforces calculator-only focus
 - LLM refuses to answer non-calculator questions
 
 ### Output Validation
+
 - Responses checked for calculator-related content
 - TOML specifications validated against schema
 - Generated Python code passes linting and testing
 
 ### Clinical Safety
+
 - Explicitly prevents clinical advice or medical decisions
 - Users are responsible for validating calculator logic
 - Generated code must be reviewed by clinicians before use

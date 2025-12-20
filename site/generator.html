@@ -48,7 +48,7 @@
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         <!-- Tabs Container -->
-<div class="card bg-base-100 shadow-xl lg:col-span-2">
+        <div id="tabsContainer" class="card bg-base-100 shadow-xl lg:col-span-2">
   <div class="card-body gap-4">
     <!-- Tab Navigation with Icons -->
     <div class="generator-tabs">
@@ -333,9 +333,15 @@ Interpretation: BMI is [result] kg/m²</code></pre>
         </div>
 
         <!-- Output Panel -->
-        <div class="card bg-base-100 shadow-xl lg:col-span-2">
+        <div id="outputContainer" class="card bg-base-100 shadow-xl lg:col-span-2 hidden">
           <div class="card-body gap-4">
-            <h2 class="card-title text-2xl">Output</h2>
+            <div class="flex items-start justify-between">
+              <h2 class="card-title text-2xl">Output</h2>
+              <div class="card-actions gap-2">
+                <button class="btn btn-sm btn-ghost" onclick="showFormPreserve()">Back to form</button>
+                <button class="btn btn-sm btn-outline" onclick="showFormReset()">Start new</button>
+              </div>
+            </div>
             
             <!-- Loading state -->
             <div id="loadingState" class="hidden">
@@ -379,12 +385,15 @@ Interpretation: BMI is [result] kg/m²</code></pre>
                 <div role="tabpanel" class="tab-content p-4">
                   <div class="flex justify-between items-center mb-2">
                     <h3 class="font-semibold" id="calculatorName"></h3>
-                    <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('pythonCode')">
+                    <div class="flex items-center gap-2">
+                      <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('pythonCode')">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                       Copy
-                    </button>
+                      </button>
+                      <button class="btn btn-sm btn-outline" onclick="startEditCode('pythonCode')" id="pythonEditBtn">Edit</button>
+                    </div>
                   </div>
                   <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto"><code id="pythonCode" class="text-sm"></code></pre>
                 </div>
@@ -393,12 +402,15 @@ Interpretation: BMI is [result] kg/m²</code></pre>
                 <div role="tabpanel" class="tab-content p-4">
                   <div class="flex justify-between items-center mb-2">
                     <h3 class="font-semibold" id="testName"></h3>
-                    <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('testCode')">
+                    <div class="flex items-center gap-2">
+                      <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('testCode')">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                       Copy
-                    </button>
+                      </button>
+                      <button class="btn btn-sm btn-outline" onclick="startEditCode('testCode')" id="testEditBtn">Edit</button>
+                    </div>
                   </div>
                   <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto"><code id="testCode" class="text-sm"></code></pre>
                 </div>
@@ -510,6 +522,109 @@ Interpretation: BMI is [result] kg/m²</code></pre>
           .replace(/[^a-z0-9]+/g, '_')
           .replace(/^_+|_+$/g, '')
           .replace(/_+/g, '_');
+      }
+
+      // Show the output card and hide the tabs container
+      window.showOutput = function() {
+        const tabs = document.getElementById('tabsContainer');
+        const output = document.getElementById('outputContainer');
+        if (tabs) tabs.classList.add('hidden');
+        if (output) output.classList.remove('hidden');
+        // Scroll to output for better UX
+        if (output) output.scrollIntoView({ behavior: 'smooth' });
+      }
+
+      // Return to the form, preserving inputs / state
+      window.showFormPreserve = function() {
+        const tabs = document.getElementById('tabsContainer');
+        const output = document.getElementById('outputContainer');
+        if (output) output.classList.add('hidden');
+        if (tabs) tabs.classList.remove('hidden');
+        if (tabs) tabs.scrollIntoView({ behavior: 'smooth' });
+      }
+
+      // Return to the form and reset everything (empty form)
+      window.showFormReset = function() {
+        // Hide output
+        const output = document.getElementById('outputContainer');
+        const tabs = document.getElementById('tabsContainer');
+        if (output) output.classList.add('hidden');
+        if (tabs) tabs.classList.remove('hidden');
+
+        // Reset form state
+        try {
+          if (typeof clearForm === 'function') clearForm();
+        } catch (e) { /* ignore */ }
+
+        // Clear generated data and code displays
+        generatedData = null;
+        const pythonCodeEl = document.getElementById('pythonCode');
+        const testCodeEl = document.getElementById('testCode');
+        if (pythonCodeEl) pythonCodeEl.textContent = '';
+        if (testCodeEl) testCodeEl.textContent = '';
+
+        // Reset output states
+        document.getElementById('loadingState')?.classList.add('hidden');
+        document.getElementById('successState')?.classList.add('hidden');
+        document.getElementById('errorState')?.classList.add('hidden');
+        document.getElementById('warningsState')?.classList.add('hidden');
+        document.getElementById('initialState')?.classList.remove('hidden');
+
+        if (tabs) tabs.scrollIntoView({ behavior: 'smooth' });
+      }
+
+      // Given a TOML spec string (from AI assistant), call the generate endpoint
+      // and render results in the output card.
+      window.processTomlSpec = async function(tomlSpec) {
+        if (!tomlSpec) return;
+
+        // Ensure output area is visible and show loading
+        window.showOutput();
+        document.getElementById('initialState').classList.add('hidden');
+        document.getElementById('successState').classList.add('hidden');
+        document.getElementById('errorState').classList.add('hidden');
+        document.getElementById('loadingState').classList.remove('hidden');
+
+        try {
+          const response = await fetch(`${API_CONFIG.baseUrl}/generate-calculator`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ spec: tomlSpec }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          document.getElementById('loadingState').classList.add('hidden');
+
+          if (response.ok) {
+            document.getElementById('successMessage').textContent = data.message || 'Generated';
+            document.getElementById('calculatorName').textContent = data.name ? `calculators/${data.name}.py` : '';
+            document.getElementById('testName').textContent = data.name ? `tests/test_${data.name}.py` : '';
+            document.getElementById('pythonCode').textContent = data.python_code || tomlSpec;
+            document.getElementById('testCode').textContent = data.test_code || '';
+
+            const warnings = (data.validation_errors || []).filter(e => e.severity === 'warning');
+            if (warnings.length > 0) {
+              document.getElementById('warningsState').classList.remove('hidden');
+              document.getElementById('warningsList').innerHTML = warnings
+                .map(e => `<div class="mt-1"><strong>${e.field}:</strong> ${e.message}</div>`)
+                .join('');
+            } else {
+              document.getElementById('warningsState').classList.add('hidden');
+            }
+
+            document.getElementById('successState').classList.remove('hidden');
+          } else {
+            const errors = (data.detail && data.detail.validation_errors) || [];
+            document.getElementById('errorList').innerHTML = errors
+              .map(e => `<div class="mt-1"><strong>${e.field}:</strong> ${e.message}</div>`)
+              .join('') || `<div>${data.detail || 'Unknown error'}</div>`;
+            document.getElementById('errorState').classList.remove('hidden');
+          }
+        } catch (err) {
+          document.getElementById('loadingState').classList.add('hidden');
+          document.getElementById('errorList').innerHTML = `<div>Network error: ${err.message}</div>`;
+          document.getElementById('errorState').classList.remove('hidden');
+        }
       }
 
       window.updateVariablesDisplay = function() {
@@ -750,6 +865,9 @@ Interpretation: BMI is [result] kg/m²</code></pre>
           return;
         }
 
+        // Ensure output area is visible immediately so spinner is shown while request is in-flight
+        window.showOutput();
+
         // Show loading
         document.getElementById('initialState').classList.add('hidden');
         document.getElementById('successState').classList.add('hidden');
@@ -790,6 +908,8 @@ Interpretation: BMI is [result] kg/m²</code></pre>
             }
 
             document.getElementById('successState').classList.remove('hidden');
+            // Show output card and hide the form tabs
+            window.showOutput();
           } else {
             // Show errors
             const errors = data.detail.validation_errors || [];
@@ -797,11 +917,14 @@ Interpretation: BMI is [result] kg/m²</code></pre>
               .map(e => `<div class="mt-1"><strong>${e.field}:</strong> ${e.message}</div>`)
               .join('');
             document.getElementById('errorState').classList.remove('hidden');
+            // Show output card with errors
+            window.showOutput();
           }
         } catch (error) {
           document.getElementById('loadingState').classList.add('hidden');
           document.getElementById('errorList').innerHTML = `<div>Network error: ${error.message}</div>`;
           document.getElementById('errorState').classList.remove('hidden');
+          window.showOutput();
         }
       };
 
@@ -1094,6 +1217,38 @@ window.sendChatMessage = async function() {
     window.chatHistory.push({ role: "assistant", content: fullResponse });
 
     chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Store the TOML spec but DO NOT auto-submit it. Let the user choose to import.
+    window.pendingTomlSpec = tomlSpec || null;
+
+    if (tomlSpec) {
+      // Add an Import button to the assistant bubble for explicit user action
+      const importWrapper = document.createElement('div');
+      importWrapper.className = 'mt-2 flex gap-2';
+
+      const importBtn = document.createElement('button');
+      importBtn.className = 'btn btn-sm btn-primary';
+      importBtn.textContent = 'Import calculator';
+      importBtn.addEventListener('click', async function() {
+        if (window.pendingTomlSpec) {
+          await window.processTomlSpec(window.pendingTomlSpec);
+          window.pendingTomlSpec = null;
+          importWrapper.remove();
+        }
+      });
+
+      const dismissBtn = document.createElement('button');
+      dismissBtn.className = 'btn btn-sm btn-ghost';
+      dismissBtn.textContent = 'Dismiss';
+      dismissBtn.addEventListener('click', function() {
+        window.pendingTomlSpec = null;
+        importWrapper.remove();
+      });
+
+      importWrapper.appendChild(importBtn);
+      importWrapper.appendChild(dismissBtn);
+      responseDiv.appendChild(importWrapper);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 
   } catch (error) {
     console.error("Chat error:", error);
@@ -1152,6 +1307,70 @@ function parseMarkdown(text) {
   text = text.replace(/(<li>.*?<\/li>)/s, '<ul class="list-disc list-inside">$1</ul>');
   
   return text;
+}
+
+// Inline editor for generated code blocks (python/test)
+window.startEditCode = function(codeId) {
+  const codeEl = document.getElementById(codeId);
+  if (!codeEl) return;
+
+  // If an editor already exists for this block, focus it
+  if (document.getElementById(codeId + '_editor_wrapper')) {
+    document.getElementById(codeId + '_editor_wrapper').querySelector('textarea').focus();
+    return;
+  }
+
+  const pre = codeEl.closest('pre');
+  if (!pre) return;
+
+  // Hide the pre block
+  pre.style.display = 'none';
+
+  // Create editor wrapper
+  const editorWrapper = document.createElement('div');
+  editorWrapper.id = codeId + '_editor_wrapper';
+  editorWrapper.className = 'mt-2';
+
+  const textarea = document.createElement('textarea');
+  textarea.className = 'textarea textarea-bordered font-mono text-sm w-full h-64';
+  textarea.value = codeEl.textContent || '';
+
+  const controls = document.createElement('div');
+  controls.className = 'mt-2 flex gap-2';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-sm btn-success';
+  saveBtn.textContent = 'Save';
+  saveBtn.addEventListener('click', function() {
+    // Update displayed code
+    codeEl.textContent = textarea.value;
+
+    // Update generatedData if present
+    if (window.generatedData) {
+      if (codeId === 'pythonCode') window.generatedData.calculator_code = textarea.value;
+      if (codeId === 'testCode') window.generatedData.test_code = textarea.value;
+    }
+
+    editorWrapper.remove();
+    pre.style.display = '';
+  });
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-sm btn-ghost';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', function() {
+    editorWrapper.remove();
+    pre.style.display = '';
+  });
+
+  controls.appendChild(saveBtn);
+  controls.appendChild(cancelBtn);
+
+  editorWrapper.appendChild(textarea);
+  editorWrapper.appendChild(controls);
+
+  pre.parentNode.insertBefore(editorWrapper, pre.nextSibling);
+  textarea.focus();
 }
     </script>
   </body>

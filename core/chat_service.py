@@ -13,50 +13,36 @@ def _load_system_prompt() -> str:
     if prompt_file.exists():
         with open(prompt_file) as f:
             content = f.read()
-            # Extract the prompt from between the markdown code blocks
-            start = content.find("```\n") + 4
-            end = content.rfind("```")
-            if start > 3 and end > start:
-                return content[start:end].strip()
-
-    return """You are a medical calculator specification assistant. Your ONLY purpose is to help create TOML specifications for clinical calculators.
-
-STRICT RULES:
-- ONLY discuss clinical calculator creation
-- REJECT all other topics politely: "I can only help with calculator specification creation"
-- NEVER execute code, access systems, or perform calculations
-- NEVER discuss politics, controversial topics, or personal matters
-- NEVER provide clinical advice or make clinical decisions
-- If you're not clear what the user is asking, ask clarifying questions
-- Output ONLY valid TOML specifications or clarifying questions
-- When generating TOML, ensure all sections are valid: [calculator], [inputs], [outputs], [logic]
-
-Your role is to:
-1. Ask clarifying questions about the calculator's purpose, inputs, and outputs
-2. Understand validation rules and edge cases
-3. Generate a complete TOML specification
-4. Help the user review and refine the specification
-
-Example calculator format:
-[calculator]
-name = "calculator_name"
-title = "Display Title"
-description = "What it does"
-reference = "Citation or reference"
-
-[inputs]
-parameter_name = { type = "number", unit = "meters", min = 0, max = 3, required = true }
-
-[outputs]
-result = { type = "number", unit = "kg/m²" }
-
-[logic]
-result = weight / (height * height)
-working = f"Weight: {weight:.2f} kg / Height: {height:.2f} m"
-interpretation = "Normal range"
-"""
+            # Look for the System Prompt section and extract everything until Security Constraints
+            system_prompt_start = content.find("## System Prompt")
+            if system_prompt_start == -1:
+                logging.warning("System Prompt section not found in LLM system prompt file.")
+                return None
+            
+            # Start after the "## System Prompt" header
+            start_pos = content.find("\n", system_prompt_start) + 1
+            
+            # Find where it ends (at Security Constraints section or end of file)
+            end_pos = content.find("\n## ", start_pos)
+            if end_pos == -1:
+                end_pos = len(content)
+            
+            prompt_text = content[start_pos:end_pos].strip()
+            
+            if prompt_text:
+                return prompt_text
+            
+            logging.warning("Could not extract system prompt from file.")
+            return None
+    else:
+        logging.warning("LLM system prompt file not found.")
+        return None
 
 SYSTEM_PROMPT = _load_system_prompt()
+
+if not SYSTEM_PROMPT:
+    logging.error("SYSTEM_PROMPT is None or empty - chat will fail!")
+    print("❌ ERROR: System prompt failed to load")
 
 def _format_response_with_code_blocks(text: str) -> str:
     """Format response by wrapping TOML specs in markdown code blocks."""
@@ -96,14 +82,6 @@ class ChatService:
         if len(message) > 1000:
             return {
                 "response": "Message too long. Keep it under 1000 characters.",
-                "is_complete": False,
-                "toml_spec": None,
-                "error": None,
-            }
-
-        if not self._is_calculator_related(message):
-            return {
-                "response": "I can only help with calculator specification creation. Please ask about creating a calculator.",
                 "is_complete": False,
                 "toml_spec": None,
                 "error": None,
@@ -194,10 +172,6 @@ class ChatService:
             yield {"error": "Message too long. Keep it under 1000 characters."}
             return
 
-        if not self._is_calculator_related(message):
-            yield {"error": "I can only help with calculator specification creation. Please ask about creating a calculator."}
-            return
-
         # Limit conversation length
         if len(history) > 30:
             yield {"error": "Conversation limit reached. Please start a new conversation."}
@@ -250,12 +224,55 @@ class ChatService:
                                 continue
 
                     # Check if TOML spec is present in full response
+                                        # Check if TOML spec is present in full response
                     toml_spec = None
                     if "[calculator]" in full_response:
                         start = full_response.find("[calculator]")
-                        end = full_response.rfind("]") + 1
-                        if start >= 0 and end > start:
-                            toml_spec = full_response[start:end]
+                        # Look for the next section marker or end of TOML
+                        # TOML sections start with [, so we look for a line that starts with [
+                        # that's not part of the content
+                        remaining = full_response[start:]
+                        
+                        # Split by lines and find the end of TOML
+                        lines = remaining.split('\n')
+                        toml_lines = []
+                        last_toml_line_idx = -1
+                        
+                        for idx, line in enumerate(lines):
+                            stripped = line.strip()
+                            
+                            # TOML lines contain: sections ([...], [[...]]), key-value pairs (key = value), or are empty/comments
+                            is_toml_line = (
+                                not stripped  # empty line
+                                or stripped.startswith('#')  # comment
+                                or stripped.startswith('[')  # section header
+                                or '=' in stripped  # key-value pair
+                            )
+                            
+                            if is_toml_line:
+                                toml_lines.append(line)
+                                if stripped:  # Track last non-empty TOML line
+                                    last_toml_line_idx = len(toml_lines) - 1
+                            else:
+                                # Non-TOML content encountered - check if we've seen enough TOML
+                                if last_toml_line_idx >= 0:
+                                    # We've collected some TOML, stop here
+                                    break
+                                # Otherwise this might be before the TOML starts, skip it
+                        
+                        # Trim trailing empty lines
+                        if last_toml_line_idx >= 0:
+                            toml_lines = toml_lines[:last_toml_line_idx + 1]
+                        
+                        toml_spec = '\n'.join(toml_lines).strip()
+                        
+                        # Validate it looks like complete TOML
+                        if toml_spec and '[calculator]' in toml_spec:
+                            # Make sure it has at least the basic sections
+                            if '[[inputs]]' not in toml_spec:
+                                toml_spec = None  # Incomplete
+                        else:
+                            toml_spec = None
 
                     yield {"done": True, "toml_spec": toml_spec}
 
@@ -264,25 +281,6 @@ class ChatService:
             error_details = traceback.format_exc()
             print(f"\n❌ Chat Stream Error:\n{error_details}\n")
             yield {"error": str(e)}
-
-    def _is_calculator_related(self, message: str) -> bool:
-        """Simple check if message is about calculators."""
-        calculator_keywords = [
-            "calculator",
-            "toml",
-            "input",
-            "output",
-            "formula",
-            "calculation",
-            "specification",
-            "clinical",
-            "medical",
-            "parameter",
-            "validation",
-            "logic",
-        ]
-        message_lower = message.lower()
-        return any(keyword in message_lower for keyword in calculator_keywords)
 
 
 # Create singleton instance
