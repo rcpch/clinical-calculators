@@ -402,7 +402,6 @@ async function handleSubmit(e) {
 
 // Display calculation result
 function displayResult(result) {
-
   // Show output card, hide manual/AI entry cards
   const outputCard = document.getElementById("output-card");
   if (outputCard) outputCard.classList.remove("hidden");
@@ -496,7 +495,6 @@ window.resetOutput = function () {
   // Optionally clear AI chat
   const chat = document.getElementById("chatMessages");
   if (chat) chat.innerHTML = "";
-};
 };
 
 function formatLabel(key) {
