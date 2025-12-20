@@ -46,181 +46,239 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Input Form -->
-        <div class="card bg-base-100 shadow-xl lg:col-span-2">
-          <div class="card-body gap-4">
-            <div class="flex justify-between items-center">
-              <h2 class="card-title text-2xl">Calculator Details</h2>
-              <div class="flex gap-2">
-                <button class="btn btn-sm btn-outline" onclick="loadExample()">Load Example</button>
-                <button class="btn btn-sm btn-outline" onclick="clearForm()">Clear</button>
+
+        <!-- Tabs Container -->
+        <div id="tabsContainer" class="card bg-base-100 shadow-xl lg:col-span-2">
+  <div class="card-body gap-4">
+    <!-- Tab Navigation with Icons -->
+    <div class="generator-tabs">
+      <button class="tab-button active" onclick="switchTab(event, 'manual-form-panel')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+        </svg>
+        Manual Form
+      </button>
+      <button class="tab-button" onclick="switchTab(event, 'ai-assistant-panel')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="{{ classes|default:'w-8 h-8' }}">
+	<!-- Large central sparkle -->
+	<path d="M12 2L13.5 8.5L20 10L13.5 11.5L12 18L10.5 11.5L4 10L10.5 8.5L12 2Z"/>
+	<!-- Small sparkle top right -->
+	<path d="M19 4L19.7 6.3L22 7L19.7 7.7L19 10L18.3 7.7L16 7L18.3 6.3L19 4Z"/>
+	<!-- Small sparkle bottom left -->
+	<path d="M5 14L5.7 16.3L8 17L5.7 17.7L5 20L4.3 17.7L2 17L4.3 16.3L5 14Z"/>
+	<!-- Tiny sparkle bottom right -->
+	<path d="M18 18L18.5 19.5L20 20L18.5 20.5L18 22L17.5 20.5L16 20L17.5 19.5L18 18Z"/>
+</svg>
+
+        AI Assistant
+      </button>
+    </div>
+
+    <!-- Tab Content Panels -->
+    <div class="tab-panels">
+      <!-- Manual Form Panel -->
+      <div id="manual-form-panel" class="tab-panel active">
+        <div class="space-y-6">
+          <div class="flex justify-between items-center">
+            <h2 class="card-title text-2xl">Calculator Details</h2>
+            <div class="flex gap-2">
+              <button class="btn btn-sm btn-outline" onclick="loadExample()">Load Example</button>
+              <button class="btn btn-sm btn-outline" onclick="clearForm()">Clear</button>
+            </div>
+          </div>
+
+          <form id="calculatorForm" class="space-y-6">
+            <!-- Calculator Info -->
+            <div class="space-y-3">
+              <h3 class="font-semibold text-lg">Basic Information</h3>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Description <span class="text-error">*</span></span>
+                </label>
+                <input type="text" id="calcDescription" class="input input-bordered" placeholder="Brief description of what this calculates" onkeyup="document.getElementById('calcName').value = generateVariableName(this.value)" required />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Calculator Name <span class="text-error">*</span></span>
+                  <span class="label-text-alt text-xs">Auto-generated from description</span>
+                </label>
+                <input type="text" id="calcName" class="input input-bordered bg-base-200" placeholder="e.g., bmi_calculator" readonly required />
+              </div>
+
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Clinical Reference <span class="text-error">*</span></span>
+                </label>
+                <input type="text" id="calcReference" class="input input-bordered" placeholder="e.g., WHO Guidelines, NICE CG123" required />
               </div>
             </div>
 
-            <form id="calculatorForm" class="space-y-6">
-              <!-- Calculator Info -->
-              <div class="space-y-3">
-                <h3 class="font-semibold text-lg">Basic Information</h3>
-                
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Description <span class="text-error">*</span></span>
-                  </label>
-                  <input type="text" id="calcDescription" class="input input-bordered" placeholder="Brief description of what this calculates" onkeyup="document.getElementById('calcName').value = generateVariableName(this.value)" required />
-                </div>
+            <div class="divider"></div>
 
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Calculator Name <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">Auto-generated from description</span>
-                  </label>
-                  <input type="text" id="calcName" class="input input-bordered bg-base-200" placeholder="e.g., bmi_calculator" readonly required />
-                </div>
-
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Clinical Reference <span class="text-error">*</span></span>
-                  </label>
-                  <input type="text" id="calcReference" class="input input-bordered" placeholder="e.g., WHO Guidelines, NICE CG123" required />
-                </div>
+            <!-- Submitter Information (Optional) -->
+            <div class="space-y-3">
+              <h3 class="font-semibold text-lg">Your Information (Optional)</h3>
+              <p class="text-sm text-gray-600">Help us attribute this contribution to you</p>
+              
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">GitHub Username</span>
+                  <span class="label-text-alt text-xs">Preferred for proper attribution</span>
+                </label>
+                <input type="text" id="submitterGithub" class="input input-bordered" placeholder="e.g., username" />
               </div>
 
-              <div class="divider"></div>
-
-              <!-- Submitter Information (Optional) -->
-              <div class="space-y-3">
-                <h3 class="font-semibold text-lg">Your Information (Optional)</h3>
-                <p class="text-sm text-gray-600">Help us attribute this contribution to you</p>
-                
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">GitHub Username</span>
-                    <span class="label-text-alt text-xs">Preferred for proper attribution</span>
-                  </label>
-                  <input type="text" id="submitterGithub" class="input input-bordered" placeholder="e.g., username" />
+              <div class="collapse collapse-arrow bg-base-200">
+                <input type="checkbox" /> 
+                <div class="collapse-title text-sm font-medium">
+                  Or provide name and affiliation
                 </div>
-
-                <div class="collapse collapse-arrow bg-base-200">
-                  <input type="checkbox" /> 
-                  <div class="collapse-title text-sm font-medium">
-                    Or provide name and affiliation
+                <div class="collapse-content space-y-3">
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Name</span>
+                    </label>
+                    <input type="text" id="submitterName" class="input input-bordered input-sm" placeholder="Your name" />
                   </div>
-                  <div class="collapse-content space-y-3">
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text">Name</span>
-                      </label>
-                      <input type="text" id="submitterName" class="input input-bordered input-sm" placeholder="Your name" />
-                    </div>
-                    
-                    <div class="form-control">
-                      <label class="label">
-                        <span class="label-text">Affiliation</span>
-                      </label>
-                      <input type="text" id="submitterAffiliation" class="input input-bordered input-sm" placeholder="Hospital, University, etc." />
-                    </div>
+                  
+                  <div class="form-control">
+                    <label class="label">
+                      <span class="label-text">Affiliation</span>
+                    </label>
+                    <input type="text" id="submitterAffiliation" class="input input-bordered input-sm" placeholder="Hospital, University, etc." />
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div class="divider"></div>
+            <div class="divider"></div>
 
-              <!-- Inputs Section -->
-              <div class="space-y-3">
-                <div class="flex justify-between items-center">
-                  <h3 class="font-semibold text-lg">Input Parameters</h3>
-                  <button type="button" class="btn btn-sm btn-outline btn-primary" onclick="addInput()">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
-                    Add Input
-                  </button>
-                </div>
+            <!-- Inputs Section -->
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <h3 class="font-semibold text-lg">Input Parameters</h3>
+                <button type="button" class="btn btn-sm btn-outline btn-primary" onclick="addInput()">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Input
+                </button>
+              </div>
 
-                <div id="inputsList" class="space-y-3">
-                  <!-- Inputs will be added here dynamically -->
+              <div id="inputsList" class="space-y-3">
+                <!-- Inputs will be added here dynamically -->
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Constants (Optional) -->
+            <div class="space-y-3">
+              <h3 class="font-semibold text-lg">Constants (Optional)</h3>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Python Constants</span>
+                  <span class="label-text-alt text-xs">Define any constants needed</span>
+                </label>
+                <textarea id="calcConstants" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="GRAVITY = 9.81&#10;CONVERSION_FACTOR = 2.54"></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-xs">One constant per line, e.g., NAME = value</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- Calculation Logic -->
+            <div class="space-y-3">
+              <h3 class="font-semibold text-lg">Calculation Logic</h3>
+              
+              <div class="alert alert-info text-xs py-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <div id="availableVariables">
+                  <em class="text-gray-500">Add input parameters to see available variables</em>
                 </div>
               </div>
 
-              <div class="divider"></div>
-
-              <!-- Constants (Optional) -->
-              <div class="space-y-3">
-                <h3 class="font-semibold text-lg">Constants (Optional)</h3>
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Python Constants</span>
-                    <span class="label-text-alt text-xs">Define any constants needed</span>
-                  </label>
-                  <textarea id="calcConstants" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="GRAVITY = 9.81&#10;CONVERSION_FACTOR = 2.54"></textarea>
-                  <label class="label">
-                    <span class="label-text-alt text-xs">One constant per line, e.g., NAME = value</span>
-                  </label>
-                </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Result <span class="text-error">*</span></span>
+                  <span class="label-text-alt text-xs">Main calculation result</span>
+                </label>
+                <textarea id="calcResult" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="weight / (height ** 2)" required></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-xs">Python expression that calculates the result</span>
+                </label>
               </div>
 
-              <div class="divider"></div>
-
-              <!-- Calculation Logic -->
-              <div class="space-y-3">
-                <h3 class="font-semibold text-lg">Calculation Logic</h3>
-                
-                <div class="alert alert-info text-xs py-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                  <div id="availableVariables">
-                    <em class="text-gray-500">Add input parameters to see available variables</em>
-                  </div>
-                </div>
-
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Result <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">Main calculation result</span>
-                  </label>
-                  <textarea id="calcResult" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="weight / (height ** 2)" required></textarea>
-                  <label class="label">
-                    <span class="label-text-alt text-xs">Python expression that calculates the result</span>
-                  </label>
-                </div>
-
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Working <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">Show your calculation steps</span>
-                  </label>
-                  <textarea id="calcWorking" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI = weight / height² = [result]" required></textarea>
-                  <label class="label">
-                    <span class="label-text-alt text-xs">Use variable names and [result] placeholder. Will be stored as {"description": "..."}. Example: BMI = weight / height² = [result]</span>
-                  </label>
-                </div>
-
-                <div class="form-control">
-                  <label class="label">
-                    <span class="label-text font-semibold">Interpretation <span class="text-error">*</span></span>
-                    <span class="label-text-alt text-xs">Clinical meaning of the result</span>
-                  </label>
-                  <textarea id="calcInterpretation" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI is [result] kg/m²" required></textarea>
-                  <label class="label">
-                    <span class="label-text-alt text-xs">Plain text with [result] placeholder. Example: BMI is [result] kg/m²</span>
-                  </label>
-                </div>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Working <span class="text-error">*</span></span>
+                  <span class="label-text-alt text-xs">Show your calculation steps</span>
+                </label>
+                <textarea id="calcWorking" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI = weight / height² = [result]" required></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-xs">Use variable names and [result] placeholder. Will be stored as {"description": "..."}. Example: BMI = weight / height² = [result]</span>
+                </label>
               </div>
-            </form>
 
-            <div class="card-actions justify-end">
-              <button
-                id="generateBtn"
-                class="btn btn-outline btn-primary btn-lg"
-                onclick="generateCalculator()"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
-                Generate Calculator
-              </button>
+              <div class="form-control">
+                <label class="label">
+                  <span class="label-text font-semibold">Interpretation <span class="text-error">*</span></span>
+                  <span class="label-text-alt text-xs">Clinical meaning of the result</span>
+                </label>
+                <textarea id="calcInterpretation" class="textarea textarea-bordered h-20 font-mono text-sm" placeholder="BMI is [result] kg/m²" required></textarea>
+                <label class="label">
+                  <span class="label-text-alt text-xs">Plain text with [result] placeholder. Example: BMI is [result] kg/m²</span>
+                </label>
+              </div>
+            </div>
+          </form>
+
+          <div class="card-actions justify-end">
+            <button
+              id="generateBtn"
+              class="btn btn-outline btn-primary btn-lg"
+              onclick="generateCalculator()"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+              </svg>
+              Generate Calculator
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Assistant Panel -->
+      <div id="ai-assistant-panel" class="tab-panel">
+        <div class="space-y-4">
+          <h2 class="card-title text-2xl">AI Assistant</h2>
+          <p class="text-gray-600">Get help creating your calculator with AI-powered suggestions</p>
+          
+          <div id="chatSection" class="space-y-4">
+            <div id="chatMessages" class="bg-base-200 rounded-lg p-4 h-96 overflow-y-auto space-y-2">
+              <!-- Chat messages will appear here -->
+            </div>
+            <div class="flex gap-2">
+              <input 
+                type="text" 
+                id="chatInput" 
+                class="input input-bordered flex-1" 
+                placeholder="Ask the AI assistant..."
+                onkeypress="if(event.key === 'Enter') sendChatMessage()"
+              />
+              <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+
+  </div>
+</div>
 
         <!-- Help Panel -->
         <div class="card bg-base-100 shadow-xl">
@@ -275,9 +333,15 @@ Interpretation: BMI is [result] kg/m²</code></pre>
         </div>
 
         <!-- Output Panel -->
-        <div class="card bg-base-100 shadow-xl lg:col-span-2">
+        <div id="outputContainer" class="card bg-base-100 shadow-xl lg:col-span-2 hidden">
           <div class="card-body gap-4">
-            <h2 class="card-title text-2xl">Output</h2>
+            <div class="flex items-start justify-between">
+              <h2 class="card-title text-2xl">Output</h2>
+              <div class="card-actions gap-2">
+                <button class="btn btn-sm btn-ghost" onclick="showFormPreserve()">Back to form</button>
+                <button class="btn btn-sm btn-outline" onclick="showFormReset()">Start new</button>
+              </div>
+            </div>
             
             <!-- Loading state -->
             <div id="loadingState" class="hidden">
@@ -321,12 +385,15 @@ Interpretation: BMI is [result] kg/m²</code></pre>
                 <div role="tabpanel" class="tab-content p-4">
                   <div class="flex justify-between items-center mb-2">
                     <h3 class="font-semibold" id="calculatorName"></h3>
-                    <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('pythonCode')">
+                    <div class="flex items-center gap-2">
+                      <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('pythonCode')">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                       Copy
-                    </button>
+                      </button>
+                      <button class="btn btn-sm btn-outline" onclick="startEditCode('pythonCode')" id="pythonEditBtn">Edit</button>
+                    </div>
                   </div>
                   <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto"><code id="pythonCode" class="text-sm"></code></pre>
                 </div>
@@ -335,12 +402,15 @@ Interpretation: BMI is [result] kg/m²</code></pre>
                 <div role="tabpanel" class="tab-content p-4">
                   <div class="flex justify-between items-center mb-2">
                     <h3 class="font-semibold" id="testName"></h3>
-                    <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('testCode')">
+                    <div class="flex items-center gap-2">
+                      <button class="btn btn-sm btn-ghost" onclick="copyToClipboard('testCode')">
                       <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                       </svg>
                       Copy
-                    </button>
+                      </button>
+                      <button class="btn btn-sm btn-outline" onclick="startEditCode('testCode')" id="testEditBtn">Edit</button>
+                    </div>
                   </div>
                   <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto"><code id="testCode" class="text-sm"></code></pre>
                 </div>
@@ -405,6 +475,9 @@ Interpretation: BMI is [result] kg/m²</code></pre>
             </div>
           </div>
         </div>
+
+        
+
       </div>
     </div>
 
@@ -449,6 +522,109 @@ Interpretation: BMI is [result] kg/m²</code></pre>
           .replace(/[^a-z0-9]+/g, '_')
           .replace(/^_+|_+$/g, '')
           .replace(/_+/g, '_');
+      }
+
+      // Show the output card and hide the tabs container
+      window.showOutput = function() {
+        const tabs = document.getElementById('tabsContainer');
+        const output = document.getElementById('outputContainer');
+        if (tabs) tabs.classList.add('hidden');
+        if (output) output.classList.remove('hidden');
+        // Scroll to output for better UX
+        if (output) output.scrollIntoView({ behavior: 'smooth' });
+      }
+
+      // Return to the form, preserving inputs / state
+      window.showFormPreserve = function() {
+        const tabs = document.getElementById('tabsContainer');
+        const output = document.getElementById('outputContainer');
+        if (output) output.classList.add('hidden');
+        if (tabs) tabs.classList.remove('hidden');
+        if (tabs) tabs.scrollIntoView({ behavior: 'smooth' });
+      }
+
+      // Return to the form and reset everything (empty form)
+      window.showFormReset = function() {
+        // Hide output
+        const output = document.getElementById('outputContainer');
+        const tabs = document.getElementById('tabsContainer');
+        if (output) output.classList.add('hidden');
+        if (tabs) tabs.classList.remove('hidden');
+
+        // Reset form state
+        try {
+          if (typeof clearForm === 'function') clearForm();
+        } catch (e) { /* ignore */ }
+
+        // Clear generated data and code displays
+        generatedData = null;
+        const pythonCodeEl = document.getElementById('pythonCode');
+        const testCodeEl = document.getElementById('testCode');
+        if (pythonCodeEl) pythonCodeEl.textContent = '';
+        if (testCodeEl) testCodeEl.textContent = '';
+
+        // Reset output states
+        document.getElementById('loadingState')?.classList.add('hidden');
+        document.getElementById('successState')?.classList.add('hidden');
+        document.getElementById('errorState')?.classList.add('hidden');
+        document.getElementById('warningsState')?.classList.add('hidden');
+        document.getElementById('initialState')?.classList.remove('hidden');
+
+        if (tabs) tabs.scrollIntoView({ behavior: 'smooth' });
+      }
+
+      // Given a TOML spec string (from AI assistant), call the generate endpoint
+      // and render results in the output card.
+      window.processTomlSpec = async function(tomlSpec) {
+        if (!tomlSpec) return;
+
+        // Ensure output area is visible and show loading
+        window.showOutput();
+        document.getElementById('initialState').classList.add('hidden');
+        document.getElementById('successState').classList.add('hidden');
+        document.getElementById('errorState').classList.add('hidden');
+        document.getElementById('loadingState').classList.remove('hidden');
+
+        try {
+          const response = await fetch(`${API_CONFIG.baseUrl}/generate-calculator`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ spec: tomlSpec }),
+          });
+
+          const data = await response.json().catch(() => ({}));
+          document.getElementById('loadingState').classList.add('hidden');
+
+          if (response.ok) {
+            document.getElementById('successMessage').textContent = data.message || 'Generated';
+            document.getElementById('calculatorName').textContent = data.name ? `calculators/${data.name}.py` : '';
+            document.getElementById('testName').textContent = data.name ? `tests/test_${data.name}.py` : '';
+            document.getElementById('pythonCode').textContent = data.python_code || tomlSpec;
+            document.getElementById('testCode').textContent = data.test_code || '';
+
+            const warnings = (data.validation_errors || []).filter(e => e.severity === 'warning');
+            if (warnings.length > 0) {
+              document.getElementById('warningsState').classList.remove('hidden');
+              document.getElementById('warningsList').innerHTML = warnings
+                .map(e => `<div class="mt-1"><strong>${e.field}:</strong> ${e.message}</div>`)
+                .join('');
+            } else {
+              document.getElementById('warningsState').classList.add('hidden');
+            }
+
+            document.getElementById('successState').classList.remove('hidden');
+          } else {
+            const errors = (data.detail && data.detail.validation_errors) || [];
+            document.getElementById('errorList').innerHTML = errors
+              .map(e => `<div class="mt-1"><strong>${e.field}:</strong> ${e.message}</div>`)
+              .join('') || `<div>${data.detail || 'Unknown error'}</div>`;
+            document.getElementById('errorState').classList.remove('hidden');
+          }
+        } catch (err) {
+          document.getElementById('loadingState').classList.add('hidden');
+          document.getElementById('errorList').innerHTML = `<div>Network error: ${err.message}</div>`;
+          document.getElementById('errorState').classList.remove('hidden');
+        }
       }
 
       window.updateVariablesDisplay = function() {
@@ -689,6 +865,9 @@ Interpretation: BMI is [result] kg/m²</code></pre>
           return;
         }
 
+        // Ensure output area is visible immediately so spinner is shown while request is in-flight
+        window.showOutput();
+
         // Show loading
         document.getElementById('initialState').classList.add('hidden');
         document.getElementById('successState').classList.add('hidden');
@@ -729,6 +908,8 @@ Interpretation: BMI is [result] kg/m²</code></pre>
             }
 
             document.getElementById('successState').classList.remove('hidden');
+            // Show output card and hide the form tabs
+            window.showOutput();
           } else {
             // Show errors
             const errors = data.detail.validation_errors || [];
@@ -736,11 +917,14 @@ Interpretation: BMI is [result] kg/m²</code></pre>
               .map(e => `<div class="mt-1"><strong>${e.field}:</strong> ${e.message}</div>`)
               .join('');
             document.getElementById('errorState').classList.remove('hidden');
+            // Show output card with errors
+            window.showOutput();
           }
         } catch (error) {
           document.getElementById('loadingState').classList.add('hidden');
           document.getElementById('errorList').innerHTML = `<div>Network error: ${error.message}</div>`;
           document.getElementById('errorState').classList.remove('hidden');
+          window.showOutput();
         }
       };
 
@@ -906,6 +1090,288 @@ Interpretation: BMI is [result] kg/m²</code></pre>
           console.warn('Could not check feature availability:', error);
         }
       })();
+
+      window.switchTab = function(event, panelId) {
+  event.preventDefault();
+  
+  // Hide all panels
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    panel.classList.remove('active');
+  });
+  
+  // Remove active class from all buttons
+  document.querySelectorAll('.tab-button').forEach(button => {
+    button.classList.remove('active');
+  });
+  
+  // Show selected panel
+  document.getElementById(panelId).classList.add('active');
+  
+  // Add active class to clicked button
+  event.target.closest('.tab-button').classList.add('active');
+};
+
+window.sendChatMessage = async function() {
+  const input = document.getElementById("chatInput");
+  const message = input.value.trim();
+
+  if (!message) return;
+
+  console.log("Sending chat message:", message);
+
+  const chatMessages = document.getElementById("chatMessages");
+  
+  // Add user message bubble
+  const userBubble = document.createElement("div");
+  userBubble.className = "chat chat-end mb-2";
+  userBubble.innerHTML = `
+    <div class="chat-bubble chat-bubble-primary bg-blue-500">
+      ${escapeHtml(message)}
+    </div>
+  `;
+  chatMessages.appendChild(userBubble);
+  input.value = "";
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+
+  // Create assistant bubble for streaming response
+  const assistantBubble = document.createElement("div");
+  assistantBubble.className = "chat chat-start mb-2";
+  const responseDiv = document.createElement("div");
+  responseDiv.className = "chat-bubble chat-bubble-secondary";
+  assistantBubble.appendChild(responseDiv);
+  chatMessages.appendChild(assistantBubble);
+
+  let fullResponse = "";
+
+  try {
+    console.log("Fetching from:", `${API_CONFIG.baseUrl}/chat/calculator/stream`);
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout for streaming
+
+    const response = await fetch(`${API_CONFIG.baseUrl}/chat/calculator/stream`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: message,
+        history: window.chatHistory || [],
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`API error: ${response.status} - ${errorData.detail || response.statusText}`);
+    }
+
+    // Handle streaming response
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+    let tomlSpec = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n\n");
+      buffer = lines[lines.length - 1];
+
+      for (let i = 0; i < lines.length - 1; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith("data: ")) {
+          try {
+            const chunk = JSON.parse(line.slice(6));
+            
+            if (chunk.token) {
+              // Add token to response
+              fullResponse += chunk.token;
+              responseDiv.innerHTML = parseMarkdown(fullResponse);
+              chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            if (chunk.done) {
+              tomlSpec = chunk.toml_spec;
+            }
+            
+            if (chunk.error) {
+              throw new Error(chunk.error);
+            }
+          } catch (e) {
+            console.error("Error parsing chunk:", e);
+          }
+        }
+      }
+    }
+
+    // Store in history
+    if (typeof window.chatHistory === 'undefined') {
+      window.chatHistory = [];
+    }
+    window.chatHistory.push({ role: "user", content: message });
+    window.chatHistory.push({ role: "assistant", content: fullResponse });
+
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Store the TOML spec but DO NOT auto-submit it. Let the user choose to import.
+    window.pendingTomlSpec = tomlSpec || null;
+
+    if (tomlSpec) {
+      // Add an Import button to the assistant bubble for explicit user action
+      const importWrapper = document.createElement('div');
+      importWrapper.className = 'mt-2 flex gap-2';
+
+      const importBtn = document.createElement('button');
+      importBtn.className = 'btn btn-sm btn-primary';
+      importBtn.textContent = 'Import calculator';
+      importBtn.addEventListener('click', async function() {
+        if (window.pendingTomlSpec) {
+          await window.processTomlSpec(window.pendingTomlSpec);
+          window.pendingTomlSpec = null;
+          importWrapper.remove();
+        }
+      });
+
+      const dismissBtn = document.createElement('button');
+      dismissBtn.className = 'btn btn-sm btn-ghost';
+      dismissBtn.textContent = 'Dismiss';
+      dismissBtn.addEventListener('click', function() {
+        window.pendingTomlSpec = null;
+        importWrapper.remove();
+      });
+
+      importWrapper.appendChild(importBtn);
+      importWrapper.appendChild(dismissBtn);
+      responseDiv.appendChild(importWrapper);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+  } catch (error) {
+    console.error("Chat error:", error);
+    
+    let errorMessage = error.message;
+    if (error.name === 'AbortError') {
+      errorMessage = 'Request timeout - stream took too long';
+    }
+    
+    const errorBubble = document.createElement("div");
+    errorBubble.className = "chat chat-start mb-2";
+    errorBubble.innerHTML = `
+      <div class="chat-bubble chat-bubble-error">
+        Error: ${escapeHtml(errorMessage)}
+      </div>
+    `;
+    chatMessages.appendChild(errorBubble);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+};
+
+// Helper to escape HTML
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Initialize chat history if needed
+if (typeof window.chatHistory === 'undefined') {
+  window.chatHistory = [];
+}
+
+// Initialize chat history if needed
+if (typeof window.chatHistory === 'undefined') {
+  window.chatHistory = [];
+}
+
+function parseMarkdown(text) {
+  // Replace code blocks with <pre><code> tags
+  text = text.replace(/```(toml|python|json)?\n([\s\S]*?)```/g, (match, lang, code) => {
+    return `<pre class="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto"><code class="language-${lang || 'text'}">${escapeHtml(code)}</code></pre>`;
+  });
+  
+  // Replace bold **text**
+  text = text.replace(/\*\*(.*?)\*/g, '<strong>$1</strong>');
+  
+  // Replace italic *text*
+  text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
+  
+  // Replace line breaks
+  text = text.replace(/\n/g, '<br>');
+  
+  // Replace bullet points
+  text = text.replace(/\* (.*?)<br>/g, '<li>$1</li>');
+  text = text.replace(/(<li>.*?<\/li>)/s, '<ul class="list-disc list-inside">$1</ul>');
+  
+  return text;
+}
+
+// Inline editor for generated code blocks (python/test)
+window.startEditCode = function(codeId) {
+  const codeEl = document.getElementById(codeId);
+  if (!codeEl) return;
+
+  // If an editor already exists for this block, focus it
+  if (document.getElementById(codeId + '_editor_wrapper')) {
+    document.getElementById(codeId + '_editor_wrapper').querySelector('textarea').focus();
+    return;
+  }
+
+  const pre = codeEl.closest('pre');
+  if (!pre) return;
+
+  // Hide the pre block
+  pre.style.display = 'none';
+
+  // Create editor wrapper
+  const editorWrapper = document.createElement('div');
+  editorWrapper.id = codeId + '_editor_wrapper';
+  editorWrapper.className = 'mt-2';
+
+  const textarea = document.createElement('textarea');
+  textarea.className = 'textarea textarea-bordered font-mono text-sm w-full h-64';
+  textarea.value = codeEl.textContent || '';
+
+  const controls = document.createElement('div');
+  controls.className = 'mt-2 flex gap-2';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-sm btn-success';
+  saveBtn.textContent = 'Save';
+  saveBtn.addEventListener('click', function() {
+    // Update displayed code
+    codeEl.textContent = textarea.value;
+
+    // Update generatedData if present
+    if (window.generatedData) {
+      if (codeId === 'pythonCode') window.generatedData.calculator_code = textarea.value;
+      if (codeId === 'testCode') window.generatedData.test_code = textarea.value;
+    }
+
+    editorWrapper.remove();
+    pre.style.display = '';
+  });
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-sm btn-ghost';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', function() {
+    editorWrapper.remove();
+    pre.style.display = '';
+  });
+
+  controls.appendChild(saveBtn);
+  controls.appendChild(cancelBtn);
+
+  editorWrapper.appendChild(textarea);
+  editorWrapper.appendChild(controls);
+
+  pre.parentNode.insertBefore(editorWrapper, pre.nextSibling);
+  textarea.focus();
+}
     </script>
   </body>
 </html>

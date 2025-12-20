@@ -13,13 +13,14 @@ from fastapi.openapi.docs import (
     get_swagger_ui_html,
     get_swagger_ui_oauth2_redirect_html,
 )
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.middleware.base import BaseHTTPMiddleware
 
 # local imports
+from core.chat_service import chat_service
 from core.generator import generate_calculator
 from core.loader import (
     DependencyError,
@@ -534,4 +535,89 @@ async def submit_calculator(
         raise HTTPException(
             status_code=500,
             detail=error_msg,
+        ) from e
+
+
+@app.post("/chat/calculator")
+@limiter.limit("10/minute")
+async def chat_calculator(request: Request, data: dict[str, Any]):
+    """
+    Chat endpoint for guided calculator creation.
+
+    Rate limited to 10 requests per minute per IP.
+
+    Request body:
+        {
+            "message": str,  # User's message
+            "history": [{"role": "user"|"assistant", "content": str}]  # Conversation history
+        }
+
+    Response:
+        {
+            "response": str,  # Assistant's response
+            "is_complete": bool,  # True if TOML spec is ready
+            "toml_spec": str | None,  # Extracted TOML if present
+            "error": str | None
+        }
+    """
+    try:
+        message = data.get("message", "").strip()
+        history = data.get("history", [])
+
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
+
+        if not isinstance(history, list):
+            raise HTTPException(status_code=400, detail="History must be a list")
+
+        # Call chat service
+        result = await chat_service.chat(message, history)
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat error: {str(e)}",
+        ) from e
+
+
+@app.post("/chat/calculator/stream")
+@limiter.limit("10/minute")
+async def chat_calculator_stream(request: Request, data: dict[str, Any]):
+    """
+    Streaming chat endpoint for guided calculator creation.
+
+    Returns Server-Sent Events (SSE) format responses.
+
+    Request body:
+        {
+            "message": str,
+            "history": [{"role": "user"|"assistant", "content": str}]
+        }
+
+    Response: Stream of JSON objects
+        {"token": str}  # Individual tokens
+        {"done": true, "toml_spec": str | null}  # Completion marker
+    """
+    try:
+        message = data.get("message", "").strip()
+        history = data.get("history", [])
+
+        if not message:
+            raise HTTPException(status_code=400, detail="Message is required")
+
+        if not isinstance(history, list):
+            raise HTTPException(status_code=400, detail="History must be a list")
+
+        async def generate():
+            async for chunk in chat_service.chat_stream(message, history):
+                yield f"data: {json.dumps(chunk)}\n\n"
+
+        return StreamingResponse(generate(), media_type="text/event-stream")
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Chat stream error: {str(e)}",
         ) from e

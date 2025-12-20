@@ -16,6 +16,11 @@ Welcome to the RCPCH Clinical Calculators documentation.
 - [PR Automation Workflow](pr-automation-workflow.md) - Detailed documentation of GitHub Actions PR automation
 - [API Reference](api-reference.md) - Complete API documentation
 
+## AI & Automation
+
+- [AI-Powered Calculator Assistant](ai-assistant.md) - Interactive conversational interface for creating calculators
+- [Large Language Model System Prompt](llm-system-prompt.md) - Published prompt for transparency and auditability
+
 ## Maintenance
 
 - [Project Maintenance](maintenance.md) - Removing calculators, deprecation, versioning, and releases
@@ -23,8 +28,5 @@ Welcome to the RCPCH Clinical Calculators documentation.
 ## Resources
 
 - [RCPCH Brand Colors](colors.md) - Official RCPCH color palette
-
-## Resources
-
 - [GitHub Repository](https://github.com/rcpch/clinical-calculators)
 - [Report an Issue](https://github.com/rcpch/clinical-calculators/issues)
