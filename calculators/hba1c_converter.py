@@ -100,7 +100,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, root_validator
+from pydantic import BaseModel, Field, model_validator
 
 from core.metadata import build_metadata
 
@@ -109,7 +109,8 @@ class HbA1cRequest(BaseModel):
     value: float = Field(..., gt=0)
     input_unit: Literal["percent", "mmol_mol"]
 
-    @root_validator
+    @model_validator(mode="before")
+    @classmethod
     def validate_ranges(cls, values):
         unit = values.get("input_unit")
         val = values.get("value")

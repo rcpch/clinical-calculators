@@ -91,7 +91,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 from core.metadata import build_metadata
 from core.request.request import CalculatorRequest
@@ -106,7 +106,8 @@ class BMIRequest(CalculatorRequest):
     weight: float = Field(..., gt=0, description="Weight in kg or lb (UCUM)")
     height: float = Field(..., gt=0, description="Height in m or in (UCUM)")
 
-    @root_validator
+    @model_validator(mode="before")
+    @classmethod
     def validate_ranges(cls, values):
         unit = values.get("unit_system")
         w = values.get("weight")

@@ -121,8 +121,7 @@ def health():
 @app.get("/", response_class=HTMLResponse)
 def home(request: Request):  # UPDATED
     root_path = request.scope.get("root_path", "")
-    return HTMLResponse(
-        f"""
+    return HTMLResponse(f"""
         <!DOCTYPE html>
         <html lang="en">
             <head>
@@ -149,8 +148,7 @@ def home(request: Request):  # UPDATED
                 </ul>
             </body>
         </html>
-        """
-    )
+        """)
 
 
 @app.get("/list")
@@ -191,7 +189,7 @@ def calculate(request: Request, payload: dict[str, Any]):
 
     try:
         resp = mod.calculate(params)  # type: ignore[attr-defined]
-        return resp.dict() if hasattr(resp, "dict") else resp
+        return resp.model_dump() if hasattr(resp, "model_dump") else resp
     except Exception as e:  # validation errors surfaced as 400
         raise HTTPException(status_code=400, detail=str(e)) from e
 
@@ -427,7 +425,7 @@ async def calculator_submit(name: str, request: Request):
 
     try:
         resp = mod.calculate(params)  # type: ignore[attr-defined]
-        data = resp.dict() if hasattr(resp, "dict") else resp
+        data = resp.model_dump() if hasattr(resp, "model_dump") else resp
         body = json.dumps(data, indent=2, ensure_ascii=False)
         return HTMLResponse(f"<pre>{body}</pre>")
     except Exception as e:
