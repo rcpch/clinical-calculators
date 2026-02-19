@@ -3,3 +3,6 @@
 # Site docs are generated from /docs during deployment
 site/docs/
 
+# IDE-related files
+.idea/
+.vscode/
