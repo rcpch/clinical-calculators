@@ -6,3 +6,41 @@ site/docs/
 # IDE-related files
 .idea/
 .vscode/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg
+eggs/
+sdist/
+wheels/
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Type checking
+.mypy_cache/
+.pytype/
+
+# Misc
+*.so
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
