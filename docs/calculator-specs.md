@@ -41,10 +41,10 @@ calculators/
 
 ### 1. Define Data Models
 
-Use Pydantic v1 models to define inputs and outputs:
+Use Pydantic models to define inputs and outputs:
 
 ```python
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 class YourCalculatorRequest(BaseModel):
     """Input parameters for the calculator."""
@@ -59,7 +59,8 @@ class YourCalculatorRequest(BaseModel):
         description="Description of parameter2"
     )
     
-    @validator('parameter2')
+    @field_validator('parameter2')
+    @classmethod
     def validate_parameter2(cls, v):
         """Custom validation logic."""
         if v not in ['option1', 'option2']:
@@ -164,7 +165,7 @@ result = {"bmi": 22.86, "category": "Normal weight", "healthy_weight_range_kg": 
 1. WHO BMI Classification
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 
 class BmiRequest(BaseModel):
     height_m: float = Field(..., description="Height in meters", gt=0)
@@ -329,7 +330,7 @@ def _interpret(value: float) -> str:
 
 ## Resources
 
-- [Pydantic v1 Documentation](https://docs.pydantic.dev/1.10/)
+- [Pydantic Documentation](https://docs.pydantic.dev/latest/)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [pytest Documentation](https://docs.pytest.org/)
 - [RCPCH Development Guidelines](development.md)

@@ -46,9 +46,9 @@ def run_calc(ns: argparse.Namespace) -> int:
         return 1
 
     result = mod.calculate(params)  # type: ignore[attr-defined]
-    # pydantic BaseModel has .json(); if simple dict, dump directly
+    # pydantic BaseModel has .model_dump_json(); if simple dict, dump directly
     try:
-        print(result.json())
+        print(result.model_dump_json())
     except AttributeError:
         print(json.dumps(result, ensure_ascii=False))
     return 0

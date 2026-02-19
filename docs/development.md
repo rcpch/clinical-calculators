@@ -69,7 +69,7 @@ Example:
 
 ```python
 from core.request.request import CalculatorRequest
-from pydantic import Field, root_validator
+from pydantic import Field, model_validator
 
 class BMIRequest(CalculatorRequest):
     unit_system: Literal["metric", "imperial"]

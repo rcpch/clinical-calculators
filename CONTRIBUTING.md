@@ -130,7 +130,7 @@ Before coding, consider:
    ```python
    from core.request.request import CalculatorRequest
    from core.response.response import CalculationResponse
-   from pydantic import Field, validator
+   from pydantic import Field, field_validator
    ```
 
 4. Define your request model (inheriting from `CalculatorRequest`)
