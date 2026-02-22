@@ -33,7 +33,7 @@ window.showDocumentation = async () => {
   try {
     // Fetch README.md from the API or GitHub
     const response = await fetch(
-      "https://raw.githubusercontent.com/rcpch/clinical-calculators/live/README.md"
+      "https://raw.githubusercontent.com/rcpch/clinical-calculators/live/README.md",
     );
     if (!response.ok) throw new Error("Failed to fetch documentation");
 
@@ -63,7 +63,7 @@ function simpleMarkdownToHTML(markdown) {
       // Links
       .replace(
         /\[([^\]]+)\]\(([^\)]+)\)/gim,
-        '<a href="$2" class="link link-primary" target="_blank">$1</a>'
+        '<a href="$2" class="link link-primary" target="_blank">$1</a>',
       )
       // Code blocks
       .replace(/```([^`]+)```/gim, "<pre><code>$1</code></pre>")
@@ -100,7 +100,7 @@ function stripMarkdown(text) {
 async function loadCalculators() {
   try {
     const response = await fetch(
-      `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.calculators}`
+      `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.calculators}`,
     );
     if (!response.ok) throw new Error("Failed to fetch calculators");
     calculators = await response.json();
@@ -144,7 +144,7 @@ function renderCalculatorList() {
       <div class="flex items-center justify-between p-4 hover:bg-base-200 transition-colors group">
         <div class="flex-1 min-w-0 mr-4">
           <h3 class="text-lg font-semibold text-rcpch-dark-blue mb-1 group-hover:text-rcpch-bright-blue">${stripMarkdown(
-            title
+            title,
           )}</h3>
           <p class="text-sm text-gray-500 font-mono truncate">api.rcpch.ac.uk/clinical-calculators/${name}</p>
         </div>
@@ -154,7 +154,7 @@ function renderCalculatorList() {
           </button>
         </div>
       </div>
-    `
+    `,
     )
     .join("");
 }
@@ -173,7 +173,7 @@ window.selectCalculator = async (name) => {
   try {
     // Fetch calculator spec
     const response = await fetch(
-      `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.calculatorDoc(name)}`
+      `${API_CONFIG.baseUrl}${API_CONFIG.endpoints.calculatorDoc(name)}`,
     );
     if (!response.ok) throw new Error("Failed to fetch calculator spec");
     const data = await response.json();
@@ -280,6 +280,132 @@ function renderCalculatorForm(name, spec) {
   document
     .getElementById("calculator-form")
     .addEventListener("submit", handleSubmit);
+  // Setup conditional validation rules (e.g. unit-dependent ranges)
+  setupConditionalValidation(inputs, name);
+}
+
+// Make validation conditional on selection for inputs like HbA1c unit
+function setupConditionalValidation(inputs, calculatorName) {
+  // Find unit selector (first enum/select input)
+  const unitInputSpec = inputs.find(
+    (i) => Array.isArray(i.enum) && i.enum.length,
+  );
+  if (!unitInputSpec) return;
+
+  const unitSelect = document.querySelector(
+    `select[name="${unitInputSpec.name}"]`,
+  );
+  if (!unitSelect) return;
+
+  // Identify numeric inputs to defer validation for until unit selected
+  const numericInputs = inputs.filter((i) =>
+    ["number", "float", "int"].includes((i.type || "").toLowerCase()),
+  );
+
+  // Remove static min/max attributes initially so client won't validate prematurely
+  numericInputs.forEach((field) => {
+    const el = document.querySelector(`input[name="${field.name}"]`);
+    if (el) {
+      el.removeAttribute("min");
+      el.removeAttribute("max");
+    }
+  });
+
+  // Parse validation rules block from docstring to find alternate ranges
+  const doc = currentSpec && currentSpec.doc ? currentSpec.doc : "";
+  const validationBlockMatch = doc.match(
+    /##\s*📂\s*Validation Rules([\s\S]*?)(?:\n##|$)/i,
+  );
+  const validationBlock = validationBlockMatch ? validationBlockMatch[1] : "";
+
+  // Helper: try to extract alternate max for a field from validation text
+  function extractAlternates(field) {
+    const name = field.name;
+    const alternates = {};
+    // Look for lines mentioning the field name or common words (height/weight/value)
+    const lines = validationBlock.split(/\n/).map((l) => l.trim());
+    for (const line of lines) {
+      if (!line) continue;
+      if (
+        line.toLowerCase().includes(name.replace(/_/g, " ")) ||
+        (name === "value" && /value/i.test(line)) ||
+        (name === "height" && /height/i.test(line)) ||
+        (name === "weight" && /weight/i.test(line))
+      ) {
+        // Look for patterns like "≤ 3 m (or 118 in)" or "≤ 200 for mmol/mol"
+        const parenMatch = line.match(
+          /≤\s*([0-9.]+)\s*[^\s\(]+\s*\(or\s*([0-9.]+)\s*([^\)]+)\)/i,
+        );
+        if (parenMatch) {
+          alternates.primary = parseFloat(parenMatch[1]);
+          alternates.secondary = parseFloat(parenMatch[2]);
+          alternates.secondaryUnit = parenMatch[3].trim();
+        } else {
+          // Match single numeric max (e.g., "≤ 200 for mmol/mol")
+          const singleMatch = line.match(/≤\s*([0-9.]+)/);
+          if (singleMatch) alternates.primary = parseFloat(singleMatch[1]);
+        }
+      }
+    }
+    return alternates;
+  }
+
+  // Build a map of per-field alternates
+  const fieldAlternates = {};
+  numericInputs.forEach((field) => {
+    fieldAlternates[field.name] = extractAlternates(field);
+  });
+
+  // Build unit mapping from input 'unit' strings where available
+  const unitMap = {};
+  numericInputs.forEach((field) => {
+    if (
+      field.unit &&
+      typeof field.unit === "string" &&
+      field.unit.includes("|")
+    ) {
+      const parts = field.unit.split("|").map((p) => p.trim());
+      // map to simple tokens like 'metric'/'imperial' if possible by presence of units
+      unitMap[field.name] = parts; // e.g. ["m (UCUM: m)", "in (UCUM: [in_i])"]
+    }
+  });
+
+  // When unit changes, apply appropriate rules; when blank, remove ranges
+  unitSelect.addEventListener("change", (e) => {
+    const val = e.target.value;
+    if (!val) {
+      numericInputs.forEach((field) => {
+        const el = document.querySelector(`input[name="${field.name}"]`);
+        if (el) {
+          el.removeAttribute("min");
+          el.removeAttribute("max");
+        }
+      });
+      return;
+    }
+
+    // Apply rules heuristically: prefer explicit alternates parsed from Validation Rules.
+    numericInputs.forEach((field) => {
+      const el = document.querySelector(`input[name="${field.name}"]`);
+      if (!el) return;
+      const alternates = fieldAlternates[field.name] || {};
+      // If alternates.secondary exists and user selected the second enum option, use it.
+      if (alternates.secondary && unitSelect.options.length >= 2) {
+        const selectedIndex = unitSelect.selectedIndex - 0; // 0-based
+        // Assume option 0 -> primary, option 1 -> secondary
+        if (selectedIndex === 0) {
+          if (alternates.primary)
+            el.setAttribute("max", String(alternates.primary));
+        } else if (selectedIndex === 1) {
+          el.setAttribute("max", String(alternates.secondary));
+        }
+      } else {
+        // Fallback: use the min/max specified in the inputs section (if present)
+        if (field.min != null) el.setAttribute("min", String(field.min));
+        if (field.max != null) el.setAttribute("max", String(field.max));
+      }
+    });
+  });
 }
 
 // Render individual input field
@@ -307,8 +433,8 @@ function renderInputField(input) {
           <span class="label-text font-semibold">${label} ${requiredMark} ${unitLabel}</span>
         </label>
         <select name="${name}" class="select select-bordered w-full" ${
-      required ? "required" : ""
-    }>
+          required ? "required" : ""
+        }>
           <option value="">Select ${label}</option>
           ${enumValues
             .map((val) => `<option value="${val}">${val}</option>`)
@@ -358,9 +484,9 @@ async function handleSubmit(e) {
   const numericFields = new Set(
     inputs
       .filter((i) =>
-        ["number", "float", "int"].includes((i.type || "").toLowerCase())
+        ["number", "float", "int"].includes((i.type || "").toLowerCase()),
       )
-      .map((i) => i.name)
+      .map((i) => i.name),
   );
 
   for (const [key, value] of formData.entries()) {
@@ -382,7 +508,7 @@ async function handleSubmit(e) {
           calculator: currentCalculator,
           params: params,
         }),
-      }
+      },
     );
 
     if (!response.ok) {
@@ -442,11 +568,11 @@ function displayResult(result) {
               return `
               <div class="flex justify-between items-center p-3 bg-base-200 rounded-lg">
                 <span class="font-semibold text-gray-700">${formatLabel(
-                  key
+                  key,
                 )}:</span>
                 <span class="text-gray-900">${formatValue(
                   value,
-                  mainData
+                  mainData,
                 )}</span>
               </div>
             `;
@@ -462,7 +588,7 @@ function displayResult(result) {
             <p><strong>Calculator:</strong> ${metadata.calculator_name}</p>
             <p><strong>Version:</strong> ${metadata.version}</p>
             <p><strong>Timestamp:</strong> ${new Date(
-              metadata.timestamp
+              metadata.timestamp,
             ).toLocaleString()}</p>
           </div>
         `
