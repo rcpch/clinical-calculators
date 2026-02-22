@@ -16,27 +16,47 @@ cd "$repo_root"
 
 cmd="${1:-up}"
 
+# Explicit compose command to include the override file used in dev
+COMPOSE_CMD="docker compose -f docker-compose.yml -f docker-compose.override.yml"
+
 case "$cmd" in
   up)
-    docker compose up --build -d
+    # Ensure a .env exists for local development (use example if present)
+    if [ ! -f .env ]; then
+      if [ -f .env.example ]; then
+        cp .env.example .env
+        echo "Created .env from .env.example — edit values as needed"
+      else
+        cat > .env <<EOF
+OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+OLLAMA_API_KEY=${OLLAMA_API_KEY:-}
+OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:30b}
+GITHUB_TOKEN=${GITHUB_TOKEN:-}
+OLLAMA_ENABLED=${OLLAMA_ENABLED:-false}
+EOF
+        echo "Created minimal .env — edit values as needed"
+      fi
+    fi
+
+    $COMPOSE_CMD up --build -d
     echo "API available at http://localhost:8000 (docs at /docs)"
     ;;
   down)
-    docker compose down
+    $COMPOSE_CMD down
     ;;
   logs)
-    docker compose logs -f
+    $COMPOSE_CMD logs -f
     ;;
   rebuild)
-    docker compose build --no-cache
-    docker compose up -d
+    $COMPOSE_CMD build --no-cache
+    $COMPOSE_CMD up -d
     ;;
   sh)
-    cid=$(docker compose ps -q api)
+    cid=$($COMPOSE_CMD ps -q api)
     if [[ -z "$cid" ]]; then
       echo "api container not running; starting..."
-      docker compose up -d
-      cid=$(docker compose ps -q api)
+      $COMPOSE_CMD up -d
+      cid=$($COMPOSE_CMD ps -q api)
     fi
     docker exec -it "$cid" /bin/bash || docker exec -it "$cid" /bin/sh
     ;;

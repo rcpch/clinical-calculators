@@ -1,0 +1,10 @@
+version: "3.8"
+
+services:
+  api:
+    # Dev-only env file. This file is intentionally separate so CI doesn't
+    # require a .env in the repository root. Developers run `docker compose`
+    # locally and will automatically pick up this override which points to
+    # `./.env` in the repo root.
+    env_file:
+      - ./.env
