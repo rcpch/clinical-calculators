@@ -17,7 +17,7 @@ cd "$repo_root"
 cmd="${1:-up}"
 
 # Explicit compose command to include the override file used in dev
-COMPOSE_CMD="docker compose -f docker-compose.yml -f docker-compose.override.yml"
+COMPOSE_CMD="docker compose -f docker-compose.yml -f docker-compose.dev.yml"
 
 case "$cmd" in
   up)
