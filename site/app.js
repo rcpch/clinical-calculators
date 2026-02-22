@@ -347,9 +347,12 @@ function setupConditionalValidation(inputs, calculatorName) {
             alternates.primary = parseFloat(singleMatch[1]);
             // Try to detect which unit this primary value applies to
             if (/mmol/i.test(line)) alternates.primaryUnit = "mmol_mol";
-            else if (/percent|%/i.test(line)) alternates.primaryUnit = "percent";
-            else if (/kg|lb|pound|lb\b/i.test(line)) alternates.primaryUnit = "weight";
-            else if (/m\b|in\b|inch/i.test(line)) alternates.primaryUnit = "height";
+            else if (/percent|%/i.test(line))
+              alternates.primaryUnit = "percent";
+            else if (/kg|lb|pound|lb\b/i.test(line))
+              alternates.primaryUnit = "weight";
+            else if (/m\b|in\b|inch/i.test(line))
+              alternates.primaryUnit = "height";
           }
         }
       }
@@ -392,7 +395,9 @@ function setupConditionalValidation(inputs, calculatorName) {
     }
 
     // Determine index among real options (skip empty placeholder)
-    const realOptions = Array.from(unitSelect.options).filter((o) => o.value !== "");
+    const realOptions = Array.from(unitSelect.options).filter(
+      (o) => o.value !== "",
+    );
     const selectedRealIndex = realOptions.findIndex((o) => o.value === val);
 
     // Apply rules heuristically: prefer explicit alternates parsed from Validation Rules.
@@ -402,14 +407,17 @@ function setupConditionalValidation(inputs, calculatorName) {
       const alternates = fieldAlternates[field.name] || {};
       if (alternates.secondary && realOptions.length >= 2) {
         if (selectedRealIndex === 0) {
-          if (alternates.primary) el.setAttribute("max", String(alternates.primary));
+          if (alternates.primary)
+            el.setAttribute("max", String(alternates.primary));
         } else if (selectedRealIndex === 1) {
           el.setAttribute("max", String(alternates.secondary));
         }
       } else if (alternates.primary && alternates.primaryUnit) {
         // If alternates.primaryUnit matches the selected unit, apply it
         const normalizedSelected = val.replace(/\//g, "_").toLowerCase();
-        if (normalizedSelected === String(alternates.primaryUnit).toLowerCase()) {
+        if (
+          normalizedSelected === String(alternates.primaryUnit).toLowerCase()
+        ) {
           el.setAttribute("max", String(alternates.primary));
         } else {
           if (field.min != null) el.setAttribute("min", String(field.min));
