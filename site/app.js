@@ -343,7 +343,14 @@ function setupConditionalValidation(inputs, calculatorName) {
         } else {
           // Match single numeric max (e.g., "≤ 200 for mmol/mol")
           const singleMatch = line.match(/≤\s*([0-9.]+)/);
-          if (singleMatch) alternates.primary = parseFloat(singleMatch[1]);
+          if (singleMatch) {
+            alternates.primary = parseFloat(singleMatch[1]);
+            // Try to detect which unit this primary value applies to
+            if (/mmol/i.test(line)) alternates.primaryUnit = "mmol_mol";
+            else if (/percent|%/i.test(line)) alternates.primaryUnit = "percent";
+            else if (/kg|lb|pound|lb\b/i.test(line)) alternates.primaryUnit = "weight";
+            else if (/m\b|in\b|inch/i.test(line)) alternates.primaryUnit = "height";
+          }
         }
       }
     }
@@ -371,8 +378,8 @@ function setupConditionalValidation(inputs, calculatorName) {
   });
 
   // When unit changes, apply appropriate rules; when blank, remove ranges
-  unitSelect.addEventListener("change", (e) => {
-    const val = e.target.value;
+  function applyForSelected() {
+    const val = unitSelect.value;
     if (!val) {
       numericInputs.forEach((field) => {
         const el = document.querySelector(`input[name="${field.name}"]`);
@@ -384,20 +391,29 @@ function setupConditionalValidation(inputs, calculatorName) {
       return;
     }
 
+    // Determine index among real options (skip empty placeholder)
+    const realOptions = Array.from(unitSelect.options).filter((o) => o.value !== "");
+    const selectedRealIndex = realOptions.findIndex((o) => o.value === val);
+
     // Apply rules heuristically: prefer explicit alternates parsed from Validation Rules.
     numericInputs.forEach((field) => {
       const el = document.querySelector(`input[name="${field.name}"]`);
       if (!el) return;
       const alternates = fieldAlternates[field.name] || {};
-      // If alternates.secondary exists and user selected the second enum option, use it.
-      if (alternates.secondary && unitSelect.options.length >= 2) {
-        const selectedIndex = unitSelect.selectedIndex - 0; // 0-based
-        // Assume option 0 -> primary, option 1 -> secondary
-        if (selectedIndex === 0) {
-          if (alternates.primary)
-            el.setAttribute("max", String(alternates.primary));
-        } else if (selectedIndex === 1) {
+      if (alternates.secondary && realOptions.length >= 2) {
+        if (selectedRealIndex === 0) {
+          if (alternates.primary) el.setAttribute("max", String(alternates.primary));
+        } else if (selectedRealIndex === 1) {
           el.setAttribute("max", String(alternates.secondary));
+        }
+      } else if (alternates.primary && alternates.primaryUnit) {
+        // If alternates.primaryUnit matches the selected unit, apply it
+        const normalizedSelected = val.replace(/\//g, "_").toLowerCase();
+        if (normalizedSelected === String(alternates.primaryUnit).toLowerCase()) {
+          el.setAttribute("max", String(alternates.primary));
+        } else {
+          if (field.min != null) el.setAttribute("min", String(field.min));
+          if (field.max != null) el.setAttribute("max", String(field.max));
         }
       } else {
         // Fallback: use the min/max specified in the inputs section (if present)
@@ -405,7 +421,12 @@ function setupConditionalValidation(inputs, calculatorName) {
         if (field.max != null) el.setAttribute("max", String(field.max));
       }
     });
-  });
+  }
+
+  // Apply immediately in case a unit is pre-selected
+  applyForSelected();
+
+  unitSelect.addEventListener("change", applyForSelected);
 }
 
 // Render individual input field
